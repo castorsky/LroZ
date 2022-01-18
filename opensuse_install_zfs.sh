@@ -16,6 +16,7 @@ you need install openssh-server, enable pass and start service:
 ${PURPLE}sudo zypper in -y openssh-server
 sudo systemctl restart sshd.service
 sudo passwd
+${ORANGE}Please, accept new keys for repos during installation (a).
 ${GREEN}Proceed installation? (y/n)${NC}\n";
 read -r user_reply;
 case "$user_reply" in 
@@ -120,7 +121,7 @@ do
   bpool_parts="$bpool_parts $bp_part";
   d=$((d+1));
 done
-zpool create "$BPOOL_OPT" -R /mnt bpool "$ZPOOL_TYPE" "$bpool_parts";
+eval zpool create "$BPOOL_OPT" -R /mnt bpool "$ZPOOL_TYPE" "$bpool_parts";
 
 printf "${BLUE}Creating root pool...${NC}\n"
 e=0;
@@ -131,7 +132,7 @@ do
   rpool_parts="$rpool_parts $rp_part";
   e=$((e+1));
 done
-zpool create "$RPOOL_OPT" -R /mnt rpool "$ZPOOL_TYPE" "$rpool_parts";
+eval zpool create "$RPOOL_OPT" -R /mnt rpool "$ZPOOL_TYPE" "$rpool_parts";
 
 printf "${GREEN}Please, check pools validity:${NC}\n";
 zpool status;
@@ -278,7 +279,7 @@ else
      then :;
      else printf "${RED}ERROR: Can't install yast2.${NC}\n"; exit 1;
      fi
-     if zypper --root /mnt install -y -t "$INSTALL_YAST";
+     if zypper --root /mnt install -y -t pattern "$INSTALL_YAST";
      then :;
      else printf "${RED}ERROR: Can't install $INSTALL_YAST .${NC}\n"; exit 1;
      fi

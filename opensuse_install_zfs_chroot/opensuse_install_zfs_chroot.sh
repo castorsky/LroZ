@@ -68,8 +68,8 @@ if zypper refresh;
 then :;
 else printf "${RED}ERROR: Cant refesh repositories.${NC}\n";
 fi
-printf "${GREEN}Do you see ${CYAN}C${GREEN}, ${CYAN}C.utf8${GREEN}, ${CYAN}en_US.utf8${GREEN} and ${CYAN}POSIX${GREEN} lines below? (y/n)${NC}\n";
 locale -a | grep -iP '(?<![\w\x27])C(?![\w\x27])|en_US.utf8|POSIX';
+printf "${GREEN}Do you see all:${CYAN}C${GREEN}, ${CYAN}C.utf8${GREEN}, ${CYAN}en_US.utf8${GREEN} and ${CYAN}POSIX${GREEN} lines? (y/n)${NC}\n";
 read -r user_reply;
 case "$user_reply" in 
 	y|Y) printf "${BLUE}Ok, continue...${NC}\n";
@@ -87,6 +87,7 @@ esac
 
 printf "${BLUE}Reinstalling some packages for stability...${NC}\n"
 zypper install -fy permissions iputils ca-certificates ca-certificates-mozilla pam shadow dbus-1 libutempter0 suse-module-tools util-linux;
+zypper install -y kernel-default kernel-firmware;
 
 printf "${BLUE}Adding and refresh filesystem repository...${NC}\n";
 zypper install -y lsb-release;
@@ -149,6 +150,7 @@ fi
 
 printf "${BLUE}Kernel installing...${NC}\n";
 echo 'zfs' > /etc/modules-load.d/zfs.conf;
+kernel_version=`{ls -l /boot/vmlinuz-* | egrep -o '[[:digit:]]\.[[:digit:]]\.[[:digit:]]{2}\-[[:digit:]]{2}\.[[:digit:]]{2}-default'`;
 if kernel-install add "$(uname -r)" "/boot/vmlinuz-$(uname -r)";
 then :;
 else printf "${RED}ERROR: Kernel install error, check installed version.${NC}\n"; exit 1;
