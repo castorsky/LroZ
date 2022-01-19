@@ -46,7 +46,7 @@ pkill zed;
 sed -Ei "s|/mnt/?|/|" /etc/zfs/zfs-list.cache/*;
 
 printf "${BLUE}Installing extra packages...${NC}\n";
-zypper install -y "$EXTRA_PACK";
+zypper install -y $EXTRA_PACK;
 
 if [ "$INITIAL_SNAP" = 1 ]
 then printf "${BLUE}Creating initial snapshots...${NC}\n";
@@ -69,7 +69,7 @@ then :;
 else printf "${RED}ERROR: Cant refesh repositories.${NC}\n";
 fi
 locale -a | grep -iP '(?<![\w\x27])C(?![\w\x27])|en_US.utf8|POSIX';
-printf "${GREEN}Do you see all:${CYAN}C${GREEN}, ${CYAN}C.utf8${GREEN}, ${CYAN}en_US.utf8${GREEN} and ${CYAN}POSIX${GREEN} lines? (y/n)${NC}\n";
+printf "${GREEN}Do you see all: ${CYAN}C${GREEN}, ${CYAN}C.utf8${GREEN}, ${CYAN}en_US.utf8${GREEN} and ${CYAN}POSIX${GREEN} lines? (y/n)${NC}\n";
 read -r user_reply;
 case "$user_reply" in 
 	y|Y) printf "${BLUE}Ok, continue...${NC}\n";
@@ -150,7 +150,7 @@ fi
 
 printf "${BLUE}Kernel installing...${NC}\n";
 echo 'zfs' > /etc/modules-load.d/zfs.conf;
-kernel_version=`{ls -l /boot/vmlinuz-* | egrep -o '[[:digit:]]\.[[:digit:]]\.[[:digit:]]{2}\-[[:digit:]]{2}\.[[:digit:]]{2}-default'`;
+kernel_version=`ls -l /boot/vmlinuz-* | egrep -o '[[:digit:]]\.[[:digit:]]\.[[:digit:]]{2}\-[[:digit:]]{2}\.[[:digit:]]{2}-default'`;
 if kernel-install add "$(uname -r)" "/boot/vmlinuz-$(uname -r)";
 then :;
 else printf "${RED}ERROR: Kernel install error, check installed version.${NC}\n"; exit 1;
