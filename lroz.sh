@@ -233,7 +233,19 @@ printf "${ORANGE}04. SYSTEM INSTALLATION.${NC}\n";
 printf "${BLUE}Adding repos...${NC}\n";
 if [ "$fs_repo" = "openSUSE_Tumbleweed" ]
 then fs_repo_long="tumbleweed";
+     if zypper --root /mnt ar "http://download.opensuse.org/update/${fs_repo_long}/" update;
+     then :;
+     else printf "${RED}ERROR: Can't add repository update to the new system.${NC}\n"; exit 1;
+     fi
 else fs_repo_long="distribution/leap/$fs_repo";
+     if zypper --root /mnt ar "http://download.opensuse.org/${fs_repo_long}/oss" update-os;
+     then :;
+     else printf "${RED}ERROR: Can't add repository update-os to the new system.${NC}\n"; exit 1;
+     fi
+     if zypper --root /mnt ar "http://download.opensuse.org/${fs_repo_long}/non-oss" update-nonos;
+     then :;
+     else printf "${RED}ERROR: Can't add repository update-nonos to the new system.${NC}\n"; exit 1;
+     fi
 fi
 if zypper --root /mnt ar "http://download.opensuse.org/${fs_repo_long}/repo/non-oss" non-os;
 then :;
@@ -241,15 +253,7 @@ else printf "${RED}ERROR: Can't add repository non-os to the new system.${NC}\n"
 fi
 if zypper --root /mnt ar "http://download.opensuse.org/${fs_repo_long}/repo/oss" os;
 then :;
-else printf "${RED}ERROR: Can't add repository non-os to the new system.${NC}\n"; exit 1;
-fi
-if zypper --root /mnt ar "http://download.opensuse.org/${fs_repo_long}/oss" update-os;
-then :;
-else printf "${RED}ERROR: Can't add repository non-os to the new system.${NC}\n"; exit 1;
-fi
-if zypper --root /mnt ar "http://download.opensuse.org/${fs_repo_long}/non-oss" update-nonos;
-then :;
-else printf "${RED}ERROR: Can't add repository non-os to the new system.${NC}\n"; exit 1;
+else printf "${RED}ERROR: Can't add repository os to the new system.${NC}\n"; exit 1;
 fi
 zypper --root /mnt refresh;
 if [ "$INSTALL_TYPE" -eq 1 ]
@@ -330,7 +334,7 @@ chroot /mnt zypper install -fy permissions iputils ca-certificates ca-certificat
 chroot /mnt zypper install -y kernel-default kernel-firmware;
 
 printf "${BLUE}Adding and refresh filesystem repository...${NC}\n";
-if [ -e /etc/zypp/repos.d/filesystems.repo ] 
+if [ -e /mnt/etc/zypp/repos.d/filesystems.repo ] 
 then :;
 elif chroot /mnt zypper addrepo "https://download.opensuse.org/repositories/filesystems/${fs_repo}/filesystems.repo";
 then if chroot /mnt zypper refresh;
@@ -344,7 +348,7 @@ fi
 
 printf "${BLUE}Generating hostid...${NC}\n";
 zgenhostid "$(./files/genhostid.sh)";
-chroot /mnt zgenhostid "$(./files/genhostid.sh)";
+cp /etc/hostid /mnt/etc/;
 printf "${GREEN}Are ${CYAN}$(./files/genhostid.sh)${GREEN} and ${CYAN}$(chroot /mnt hostid)${GREEN} values identical? (y/n)${NC}\n";
 read -r user_reply;
 case "$user_reply" in 
@@ -399,7 +403,7 @@ fi
 kern_install_func () {
 printf "${ORANGE}06. KERNEL INSTALLATION.${NC}\n";
 echo 'zfs' > /mnt/etc/modules-load.d/zfs.conf;
-kernel_version=$(find /mnt/boot/vmlinuz-* | grep -Eo '[[:digit:]]\.[[:digit:]]\.[[:digit:]]{2}\-[[:digit:]]{2}\.[[:digit:]]{2}-default');
+kernel_version=$(find /mnt/boot/vmlinuz-* | grep -Eo '[[:digit:]]\.[[:digit:]]{1,2}\.[[:digit:]]{1,2}\-[[:digit:]]{1,2}*-default');
 if chroot /mnt kernel-install add "$kernel_version" "/boot/vmlinuz-{$kernel_version}";
 then :;
 else printf "${RED}ERROR: Kernel install error, check installed version.${NC}\n"; exit 1;
@@ -413,10 +417,10 @@ if [ "$BOOT_TYPE" -eq 1 ]
 then chroot /mnt zypper install -y grub2;
      echo 'export ZPOOL_VDEV_NAME_PATH=YES' >> /mnt/etc/profile;
      export ZPOOL_VDEV_NAME_PATH=YES;
-     sed -i "s|rpool=.*|rpool=\`zdb -l \${GRUB_DEVICE} \| grep -E '[[:blank:]]name' \| cut -d\\\' -f 2\`|"  /mnt/etc/grub.d/10_linux;
+#     sed -i "s|rpool=.*|rpool=\`zdb -l \${GRUB_DEVICE} \| grep -E '[[:blank:]]name' \| cut -d\\\' -f 2\`|"  /mnt/etc/grub.d/10_linux;
      echo 'GRUB_ENABLE_BLSCFG=false' >> /mnt/etc/default/grub;
-     sed -i "s|^#GRUB_TERMINAL|GRUB_TERMINAL|" /mnt/etc/default/grub;
-     sed -i "s|^GRUB_CMDLINE_LINUX=.*|GRUB_CMDLINE_LINUX=\"root=ZFS=$zp_name/ROOT/suse\"|" /etc/default/grub;
+#     sed -i "s|^#GRUB_TERMINAL|GRUB_TERMINAL|" /mnt/etc/default/grub;
+#     sed -i "s|^GRUB_CMDLINE_LINUX=.*|GRUB_CMDLINE_LINUX=\"root=ZFS=$zp_name/ROOT/suse\"|" /etc/default/grub;
      chroot /mnt update-bootloader;
      chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg;
      b=0;
@@ -460,10 +464,10 @@ chroot /mnt ln -s /usr/lib/zfs/zed.d/history_event-zfs-list-cacher.sh /etc/zfs/z
 chroot /mnt zed -F &
 sleep 5;
 printf "${GREEN}Please, check information about you filesystems:${NC}\n"
-cache_pool_func "$zp_name" "on"; 
 if [ "$BOOT_PART" -eq 1 ]
-then cache_pool_func "$ZPOOL_NAME" "noauto";
-else :;
+then cache_pool_func "$zp_name" "on"; 
+     cache_pool_func "$ZPOOL_NAME" "noauto";
+else cache_pool_func "$zp_name" "noauto"; 
 fi 
 chroot /mnt pkill zed;
 sed -Ei "s|/mnt/?|/|" /mnt/etc/zfs/zfs-list.cache/*;
@@ -504,9 +508,9 @@ zypper install -y $EXTRA_PACK;
 
 if [ "$INITIAL_SNAP" = 1 ]
 then printf "${BLUE}Creating initial snapshots...${NC}\n";
-     zfs snapshot -r "$zp_name/BOOT/suse@install";
+     zfs snapshot -r "$zp_name@install";
      if [ "$BOOT_PART" -eq 1 ]
-     then zfs snapshot -r "$ZPOOL_NAME/ROOT/suse@install";
+     then zfs snapshot -r "$ZPOOL_NAME@install";
      else :;
      fi
 else :;
