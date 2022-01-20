@@ -365,7 +365,6 @@ case "$user_reply" in
 	*) printf "${RED}No user reply, stopping.${NC}\n";
 	exit 1;;
 esac
-rm /etc/hostid;
 
 if [ "$BOOT_TYPE" -eq 2 ]
 then printf "${BLUE}Preparing boot partition...${NC}\n";
@@ -529,6 +528,7 @@ cp -t /mnt/root/lroz/ ./files/firstboot.sh ./lroz.conf;
 printf "${BLUE}Unmounting and exporting zpools...${NC}\n";
 mount | grep -v zfs | tac | awk '/\/mnt/ {print $3}' | xargs -i{} umount -lf {};
 zpool export -a;
+rm /etc/hostid;
 
 printf "${ORANGE}After boot to the new installed System,
 to do some after-installation steps, run:
