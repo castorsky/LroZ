@@ -515,6 +515,9 @@ fi
 
 finish_func () {
 printf "${ORANGE}10. FINISHING.${NC}\n";
+mkdir /mnt/root/lroz;
+cp -t /mnt/root/lroz/ ./files/firstboot.sh ./lroz.conf;
+
 printf "${BLUE}Unmounting and exporting zpools...${NC}\n";
 mount | grep -v zfs | tac | awk '/\/mnt/ {print $3}' | xargs -i{} umount -lf {};
 zpool export -a;
