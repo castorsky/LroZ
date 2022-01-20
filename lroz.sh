@@ -405,7 +405,7 @@ kern_install_func () {
 printf "${ORANGE}06. KERNEL INSTALLATION.${NC}\n";
 echo 'zfs' > /mnt/etc/modules-load.d/zfs.conf;
 kernel_version=$(find /mnt/boot/vmlinuz-* | grep -Eo '[[:digit:]]\.[[:digit:]]{1,2}\.[[:digit:]]{1,2}\-[[:digit:]]{1,2}*-default');
-if chroot /mnt kernel-install add "$kernel_version" "/boot/vmlinuz-{$kernel_version}";
+if chroot /mnt kernel-install add "$kernel_version" "/boot/vmlinuz-${kernel_version}";
 then :;
 else printf "${RED}ERROR: Kernel install error, check installed version.${NC}\n"; exit 1;
 fi	
@@ -422,6 +422,9 @@ then chroot /mnt zypper install -y grub2;
      echo 'GRUB_ENABLE_BLSCFG=false' >> /mnt/etc/default/grub;
 #     sed -i "s|^#GRUB_TERMINAL|GRUB_TERMINAL|" /mnt/etc/default/grub;
 #     sed -i "s|^GRUB_CMDLINE_LINUX=.*|GRUB_CMDLINE_LINUX=\"root=ZFS=$zp_name/ROOT/suse\"|" /etc/default/grub;
+     mkdir /mnt/root/lroz;
+     cp ./files/initrd.sh /mnt/root/lroz/;
+     chroot /mnt /root/lroz/initrd.sh;
      chroot /mnt update-bootloader;
      chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg;
      b=0;
