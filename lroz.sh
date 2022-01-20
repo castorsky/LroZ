@@ -365,6 +365,7 @@ case "$user_reply" in
 	*) printf "${RED}No user reply, stopping.${NC}\n";
 	exit 1;;
 esac
+rm /etc/hostid;
 
 if [ "$BOOT_TYPE" -eq 2 ]
 then printf "${BLUE}Preparing boot partition...${NC}\n";
