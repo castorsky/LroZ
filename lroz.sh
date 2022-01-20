@@ -541,7 +541,7 @@ read -r user_reply;
 case "$user_reply" in 
 	y|Y) printf "${BLUE}Ok, rebooting...
 	Don't forget to detach installation disk!${NC}\n";
-	sleep 5; reboot; exit 0;; 
+	sleep 5; reboot; sleep 5; exit 0;; 
 	n|N) printf "${BLUE}Ok, stopping.${NC}\n"; 
 	exit 0;; 
 	*) printf "${RED}No user reply, stopping.${NC}\n";
