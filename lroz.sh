@@ -9,7 +9,7 @@ printf "${BLUE}Initial cleaning...${NC}\n";
 rm -f /etc/zypp/repos.d/filesystems.repo;
 
 printf "${BLUE}Adding and refreshing repository...${NC}\n";
-if zypper addrepo --gpg-auto-import-keys "https://download.opensuse.org/repositories/filesystems/${fs_repo}/filesystems.repo";
+if zypper --gpg-auto-import-keys addrepo "https://download.opensuse.org/repositories/filesystems/${fs_repo}/filesystems.repo";
 then if zypper refresh;
      then :;
      else printf "${RED}ERROR: Refresh repositories.${NC}\n"; exit 1;
@@ -233,25 +233,25 @@ printf "${ORANGE}04. SYSTEM INSTALLATION.${NC}\n";
 printf "${BLUE}Adding repos...${NC}\n";
 if [ "$fs_repo" = "openSUSE_Tumbleweed" ]
 then fs_repo_long="tumbleweed";
-     if zypper --root /mnt addrepo --gpg-auto-import-keys "http://download.opensuse.org/update/${fs_repo_long}/" update;
+     if zypper --root /mnt --gpg-auto-import-keys addrepo "http://download.opensuse.org/update/${fs_repo_long}/" update;
      then :;
      else printf "${RED}ERROR: Can't add repository update to the new system.${NC}\n"; exit 1;
      fi
 else fs_repo_long="distribution/leap/$fs_repo";
-     if zypper --root /mnt addrepo --gpg-auto-import-keys "http://download.opensuse.org/${fs_repo_long}/oss" update-os;
+     if zypper --root /mnt --gpg-auto-import-keys addrepo "http://download.opensuse.org/${fs_repo_long}/oss" update-os;
      then :;
      else printf "${RED}ERROR: Can't add repository update-os to the new system.${NC}\n"; exit 1;
      fi
-     if zypper --root /mnt addrepo --gpg-auto-import-keys "http://download.opensuse.org/${fs_repo_long}/non-oss" update-nonos;
+     if zypper --root /mnt --gpg-auto-import-keys addrepo "http://download.opensuse.org/${fs_repo_long}/non-oss" update-nonos;
      then :;
      else printf "${RED}ERROR: Can't add repository update-nonos to the new system.${NC}\n"; exit 1;
      fi
 fi
-if zypper --root /mnt addrepo --gpg-auto-import-keys "http://download.opensuse.org/${fs_repo_long}/repo/non-oss" non-os;
+if zypper --root /mnt --gpg-auto-import-keys addrepo "http://download.opensuse.org/${fs_repo_long}/repo/non-oss" non-os;
 then :;
 else printf "${RED}ERROR: Can't add repository non-os to the new system.${NC}\n"; exit 1;
 fi
-if zypper --root /mnt addrepo --gpg-auto-import-keys "http://download.opensuse.org/${fs_repo_long}/repo/oss" os;
+if zypper --root /mnt --gpg-auto-import-keys addrepo "http://download.opensuse.org/${fs_repo_long}/repo/oss" os;
 then :;
 else printf "${RED}ERROR: Can't add repository os to the new system.${NC}\n"; exit 1;
 fi
@@ -339,7 +339,7 @@ chroot /mnt zypper install -y kernel-default kernel-firmware;
 printf "${BLUE}Adding and refresh filesystem repository...${NC}\n";
 if [ -e /mnt/etc/zypp/repos.d/filesystems.repo ] 
 then :;
-elif chroot /mnt zypper addrepo --gpg-auto-import-keys "https://download.opensuse.org/repositories/filesystems/${fs_repo}/filesystems.repo";
+elif chroot /mnt zypper --gpg-auto-import-keys addrepo "https://download.opensuse.org/repositories/filesystems/${fs_repo}/filesystems.repo";
 then if chroot /mnt zypper refresh;
      then chroot /mnt zypper install -y zfs;
      else printf "${RED}ERROR: Refresh repositories.${NC}\n"; exit 1;
@@ -621,7 +621,6 @@ you need install openssh-server, enable pass and start service:
 ${PURPLE}sudo zypper in -y openssh-server
 sudo systemctl restart sshd.service
 sudo passwd
-${ORANGE}Please, accept new keys for repos during installation (a).
 ${GREEN}You can run lroz for any installations steps separately, if it neccessary:
 lroz.sh [step_number] where step_number is a number of installation step:
 1 - preparation
