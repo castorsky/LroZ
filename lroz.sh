@@ -9,7 +9,7 @@ printf "${BLUE}Initial cleaning...${NC}\n";
 rm -f /etc/zypp/repos.d/filesystems.repo;
 
 printf "${BLUE}Adding and refreshing repository...${NC}\n";
-if zypper addrepo "https://download.opensuse.org/repositories/filesystems/${fs_repo}/filesystems.repo";
+if zypper addrepo --gpg-auto-import-keys "https://download.opensuse.org/repositories/filesystems/${fs_repo}/filesystems.repo";
 then if zypper refresh;
      then :;
      else printf "${RED}ERROR: Refresh repositories.${NC}\n"; exit 1;
@@ -233,25 +233,25 @@ printf "${ORANGE}04. SYSTEM INSTALLATION.${NC}\n";
 printf "${BLUE}Adding repos...${NC}\n";
 if [ "$fs_repo" = "openSUSE_Tumbleweed" ]
 then fs_repo_long="tumbleweed";
-     if zypper --root /mnt ar "http://download.opensuse.org/update/${fs_repo_long}/" update;
+     if zypper --root /mnt addrepo --gpg-auto-import-keys "http://download.opensuse.org/update/${fs_repo_long}/" update;
      then :;
      else printf "${RED}ERROR: Can't add repository update to the new system.${NC}\n"; exit 1;
      fi
 else fs_repo_long="distribution/leap/$fs_repo";
-     if zypper --root /mnt ar "http://download.opensuse.org/${fs_repo_long}/oss" update-os;
+     if zypper --root /mnt addrepo --gpg-auto-import-keys "http://download.opensuse.org/${fs_repo_long}/oss" update-os;
      then :;
      else printf "${RED}ERROR: Can't add repository update-os to the new system.${NC}\n"; exit 1;
      fi
-     if zypper --root /mnt ar "http://download.opensuse.org/${fs_repo_long}/non-oss" update-nonos;
+     if zypper --root /mnt addrepo --gpg-auto-import-keys "http://download.opensuse.org/${fs_repo_long}/non-oss" update-nonos;
      then :;
      else printf "${RED}ERROR: Can't add repository update-nonos to the new system.${NC}\n"; exit 1;
      fi
 fi
-if zypper --root /mnt ar "http://download.opensuse.org/${fs_repo_long}/repo/non-oss" non-os;
+if zypper --root /mnt addrepo --gpg-auto-import-keys "http://download.opensuse.org/${fs_repo_long}/repo/non-oss" non-os;
 then :;
 else printf "${RED}ERROR: Can't add repository non-os to the new system.${NC}\n"; exit 1;
 fi
-if zypper --root /mnt ar "http://download.opensuse.org/${fs_repo_long}/repo/oss" os;
+if zypper --root /mnt addrepo --gpg-auto-import-keys "http://download.opensuse.org/${fs_repo_long}/repo/oss" os;
 then :;
 else printf "${RED}ERROR: Can't add repository os to the new system.${NC}\n"; exit 1;
 fi
@@ -306,29 +306,32 @@ mount -t tmpfs tmpfs /mnt/run;
 mkdir /mnt/run/lock;
 printf "${BLUE}Starting chroot configuration...${NC}\n";
 chroot /mnt ln -s /proc/self/mounts /etc/mtab;
+
 printf "${BLUE}Refreshing repositories under chroot...${NC}\n";
 if chroot /mnt zypper refresh;
 then :;
 else printf "${RED}ERROR: Cant refesh repositories.${NC}\n";
 fi
-printf "${BLUE}Cheking available locales...${NC}\n";
-chroot /mnt locale -a | grep -iP '(?<![\w\x27])C(?![\w\x27])|en_US.utf8|POSIX';
-printf "${GREEN}Do you see all: ${CYAN}C${GREEN}, ${CYAN}C.utf8${GREEN}, ${CYAN}en_US.utf8${GREEN} and ${CYAN}POSIX${GREEN} lines? (y/n)${NC}\n";
-read -r user_reply;
-case "$user_reply" in 
-	y|Y) printf "${BLUE}Ok, continue...${NC}\n";
-	;; 
-	n|N) printf "${BLUE}Ok, stopping.${NC}\n"; 
-	printf "${ORANGE}Seems, that you have a problem with locales.
-	Please check manually.
-	or just answer \"y\" in next time.
-	To start this install part again use:
-	${PURPLE}lroz.sh 5${NC}\n"; 
-	exit 0;; 
-	*) printf "${RED}No user reply, stopping.${NC}\n";
-	exit 1;;
-esac
 
+printf "${BLUE}Cheking availability locales: ${CYAN}C${BLUE}, ${CYAN}C.utf8${BLUE}, ${CYAN}en_US.utf8${BLUE} and ${CYAN}POSIX${BLUE}... ${NC}\n";
+if [ "$(chroot /mnt locale -a | grep -P '^C$')" = "C" ]
+then if [ "$(chroot /mnt locale -a | grep -P '^C.utf8$')" = "C.utf8" ]
+     then if [ "$(chroot /mnt locale -a | grep -P '^en_US.utf8$')" = "en_US.utf8" ]
+          then if [ "$(chroot /mnt locale -a | grep -P '^POSIX$')" = "POSIX" ]
+	       then :;
+	       else printf "${ORANGE}Seems, that you have a problem with a ${CYAN}POSIX${ORANGE} locale. Please check them manually.
+		       To start this install part again use: ${PURPLE}lroz.sh 5${NC}\n";
+	       fi
+	  else printf "${ORANGE}Seems, that you have a problem with a ${CYAN}en_US.utf8${ORANGE} locale. Please check them manually.
+		  To start this install part again use: ${PURPLE}lroz.sh 5${NC}\n";
+          fi
+     else printf "${ORANGE}Seems, that you have a problem with a ${CYAN}C.utf8${ORANGE} locale. Please check them manually.
+	     To start this install part again use: ${PURPLE}lroz.sh 5${NC}\n";
+     fi
+else printf "${ORANGE}Seems, that you have a problem with a ${CYAN}C${ORANGE} locale. Please check them manually.
+	To start this install part again use: ${PURPLE}lroz.sh 5${NC}\n";
+fi
+	       
 printf "${BLUE}Reinstalling some packages for stability...${NC}\n"
 chroot /mnt zypper install -fy permissions iputils ca-certificates ca-certificates-mozilla pam shadow dbus-1 libutempter0 suse-module-tools util-linux;
 chroot /mnt zypper install -y kernel-default kernel-firmware;
@@ -336,7 +339,7 @@ chroot /mnt zypper install -y kernel-default kernel-firmware;
 printf "${BLUE}Adding and refresh filesystem repository...${NC}\n";
 if [ -e /mnt/etc/zypp/repos.d/filesystems.repo ] 
 then :;
-elif chroot /mnt zypper addrepo "https://download.opensuse.org/repositories/filesystems/${fs_repo}/filesystems.repo";
+elif chroot /mnt zypper addrepo --gpg-auto-import-keys "https://download.opensuse.org/repositories/filesystems/${fs_repo}/filesystems.repo";
 then if chroot /mnt zypper refresh;
      then chroot /mnt zypper install -y zfs;
      else printf "${RED}ERROR: Refresh repositories.${NC}\n"; exit 1;
@@ -347,24 +350,16 @@ fi
 ## genhostid.sh script taken from https://github.com/openzfs/zfs/files/4537537/genhostid.sh.gz
 
 printf "${BLUE}Generating hostid...${NC}\n";
-zgenhostid "$(./files/genhostid.sh)";
+zgenhostid -f "$(./files/genhostid.sh)";
 cp /etc/hostid /mnt/etc/;
-printf "${GREEN}Are ${CYAN}$(./files/genhostid.sh)${GREEN} and ${CYAN}$(chroot /mnt hostid)${GREEN} values identical? (y/n)${NC}\n";
-read -r user_reply;
-case "$user_reply" in 
-	y|Y) printf "${BLUE}Ok, continue...${NC}\n";
-	;; 
-	n|N) printf "${BLUE}Ok, stopping.${NC}\n"; 
-	printf "${ORANGE}Seems, that you have a problem with hostid.
+if [ "$(./files/genhostid.sh)" = "$(chroot /mnt hostid)" ]
+then :;
+else printf "${ORANGE}Seems, that you have a problem with hostid.
 	It can affect to the zfs pools mounting during the boot.
-	Please check/install hostid manually.
-	If you sure, that you hostid set right, just answer \"y\" next time.
+	Please install the same hostid in liveos and chroot manually.
 	To start chroot install part again use:
-	${PURPLE}lroz.sh 5${NC}\n"; 
-	exit 0;; 
-	*) printf "${RED}No user reply, stopping.${NC}\n";
-	exit 1;;
-esac
+	${PURPLE}lroz.sh 5${NC}\n"; exit 1; 
+fi
 
 if [ "$BOOT_TYPE" -eq 2 ]
 then printf "${BLUE}Preparing boot partition...${NC}\n";
@@ -422,8 +417,10 @@ then chroot /mnt zypper install -y grub2;
 #     sed -i "s|^#GRUB_TERMINAL|GRUB_TERMINAL|" /mnt/etc/default/grub;
 #     sed -i "s|^GRUB_CMDLINE_LINUX=.*|GRUB_CMDLINE_LINUX=\"root=ZFS=$zp_name/ROOT/suse\"|" /etc/default/grub;
      mkdir /mnt/root/lroz;
-     cp ./files/initrd.sh /mnt/root/lroz/;
-     chroot /mnt /root/lroz/initrd.sh;
+#     cp ./files/initrd.sh /mnt/root/lroz/;
+#     chroot /mnt /root/lroz/initrd.sh;
+     chmod a-w /mnt/etc/zfs/zpool.cache;
+     chattr +i /mnt/etc/zfs/zpool.cache;
      chroot /mnt update-bootloader;
      chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg;
      b=0;
@@ -472,7 +469,7 @@ then cache_pool_func "$zp_name" "on";
      cache_pool_func "$ZPOOL_NAME" "noauto";
 else cache_pool_func "$zp_name" "noauto"; 
 fi 
-chroot /mnt pkill zed;
+chroot /mnt pkill zed > /dev/null;
 sed -Ei "s|/mnt/?|/|" /mnt/etc/zfs/zfs-list.cache/*;
 }
 
@@ -529,8 +526,8 @@ printf "${BLUE}Unmounting and exporting zpools...${NC}\n";
 mount | grep -v zfs | tac | awk '/\/mnt/ {print $3}' | xargs -i{} umount -lf {};
 zpool export -a;
 sleep 10;
-rm /etc/hostid;
-zgenhostid 00000000;
+#rm /etc/hostid;
+#zgenhostid 00000000;
 rm /etc/zfs/zpool.cache;
 
 printf "${ORANGE}After boot to the new installed System,
