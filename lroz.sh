@@ -233,29 +233,29 @@ printf "${ORANGE}04. SYSTEM INSTALLATION.${NC}\n";
 printf "${BLUE}Adding repos...${NC}\n";
 if [ "$fs_repo" = "openSUSE_Tumbleweed" ]
 then fs_repo_long="tumbleweed";
-     if zypper --root /mnt --gpg-auto-import-keys addrepo "http://download.opensuse.org/update/${fs_repo_long}/" update;
+     if zypper --root /mnt addrepo "http://download.opensuse.org/update/${fs_repo_long}/" update;
      then :;
      else printf "${RED}ERROR: Can't add repository update to the new system.${NC}\n"; exit 1;
      fi
 else fs_repo_long="distribution/leap/$fs_repo";
-     if zypper --root /mnt --gpg-auto-import-keys addrepo "http://download.opensuse.org/${fs_repo_long}/oss" update-os;
+     if zypper --root /mnt addrepo "http://download.opensuse.org/${fs_repo_long}/oss" update-os;
      then :;
      else printf "${RED}ERROR: Can't add repository update-os to the new system.${NC}\n"; exit 1;
      fi
-     if zypper --root /mnt --gpg-auto-import-keys addrepo "http://download.opensuse.org/${fs_repo_long}/non-oss" update-nonos;
+     if zypper --root /mnt addrepo "http://download.opensuse.org/${fs_repo_long}/non-oss" update-nonos;
      then :;
      else printf "${RED}ERROR: Can't add repository update-nonos to the new system.${NC}\n"; exit 1;
      fi
 fi
-if zypper --root /mnt --gpg-auto-import-keys addrepo "http://download.opensuse.org/${fs_repo_long}/repo/non-oss" non-os;
+if zypper --root /mnt addrepo "http://download.opensuse.org/${fs_repo_long}/repo/non-oss" non-os;
 then :;
 else printf "${RED}ERROR: Can't add repository non-os to the new system.${NC}\n"; exit 1;
 fi
-if zypper --root /mnt --gpg-auto-import-keys addrepo "http://download.opensuse.org/${fs_repo_long}/repo/oss" os;
+if zypper --root /mnt addrepo "http://download.opensuse.org/${fs_repo_long}/repo/oss" os;
 then :;
 else printf "${RED}ERROR: Can't add repository os to the new system.${NC}\n"; exit 1;
 fi
-zypper --root /mnt refresh;
+zypper --root /mnt --gpg-auto-import-keys refresh;
 if [ "$INSTALL_TYPE" -eq 1 ]
 then if zypper --root /mnt install -y -t pattern base;
      then :;
@@ -339,8 +339,8 @@ chroot /mnt zypper install -y kernel-default kernel-firmware;
 printf "${BLUE}Adding and refresh filesystem repository...${NC}\n";
 if [ -e /mnt/etc/zypp/repos.d/filesystems.repo ] 
 then :;
-elif chroot /mnt zypper --gpg-auto-import-keys addrepo "https://download.opensuse.org/repositories/filesystems/${fs_repo}/filesystems.repo";
-then if chroot /mnt zypper refresh;
+elif chroot /mnt zypper addrepo "https://download.opensuse.org/repositories/filesystems/${fs_repo}/filesystems.repo";
+then if chroot /mnt zypper --gpg-auto-import-keys refresh;
      then chroot /mnt zypper install -y zfs;
      else printf "${RED}ERROR: Refresh repositories.${NC}\n"; exit 1;
      fi
@@ -399,7 +399,7 @@ kern_install_func () {
 printf "${ORANGE}06. KERNEL INSTALLATION.${NC}\n";
 echo 'zfs' > /mnt/etc/modules-load.d/zfs.conf;
 kernel_version=$(find /mnt/boot/vmlinuz-* | grep -Eo '[[:digit:]]\.[[:digit:]]{1,2}\.[[:digit:]]{1,2}\-[[:digit:]]{1,2}*-default');
-dracut –kver "${kernel_version}" –force –add-drivers "zfs";
+dracut –kver "$kernel_version" –force –add-drivers "zfs";
 if chroot /mnt kernel-install add "$kernel_version" "/boot/vmlinuz-${kernel_version}";
 then :;
 else printf "${RED}ERROR: Kernel install error, check installed version.${NC}\n"; exit 1;
