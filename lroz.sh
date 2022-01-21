@@ -528,7 +528,10 @@ cp -t /mnt/root/lroz/ ./files/firstboot.sh ./lroz.conf;
 printf "${BLUE}Unmounting and exporting zpools...${NC}\n";
 mount | grep -v zfs | tac | awk '/\/mnt/ {print $3}' | xargs -i{} umount -lf {};
 zpool export -a;
+sleep 10;
 rm /etc/hostid;
+zgenhostid 00000000;
+rm /etc/zfs/zpool.cache;
 
 printf "${ORANGE}After boot to the new installed System,
 to do some after-installation steps, run:

@@ -1,6 +1,6 @@
 #!/bin/bash
-rm -f /etc/zfs/zpool.cache;
-touch /etc/zfs/zpool.cache;
+#rm -f /etc/zfs/zpool.cache;
+#touch /etc/zfs/zpool.cache;
 chmod a-w /etc/zfs/zpool.cache;
 chattr +i /etc/zfs/zpool.cache;
 for directory in /lib/modules/*; 
