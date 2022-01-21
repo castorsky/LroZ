@@ -399,6 +399,7 @@ kern_install_func () {
 printf "${ORANGE}06. KERNEL INSTALLATION.${NC}\n";
 echo 'zfs' > /mnt/etc/modules-load.d/zfs.conf;
 kernel_version=$(find /mnt/boot/vmlinuz-* | grep -Eo '[[:digit:]]\.[[:digit:]]{1,2}\.[[:digit:]]{1,2}\-[[:digit:]]{1,2}*-default');
+dracut –kver "${kernel_version}" –force –add-drivers "zfs";
 if chroot /mnt kernel-install add "$kernel_version" "/boot/vmlinuz-${kernel_version}";
 then :;
 else printf "${RED}ERROR: Kernel install error, check installed version.${NC}\n"; exit 1;
