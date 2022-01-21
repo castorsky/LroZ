@@ -9,8 +9,8 @@ printf "${BLUE}Initial cleaning...${NC}\n";
 rm -f /etc/zypp/repos.d/filesystems.repo;
 
 printf "${BLUE}Adding and refreshing repository...${NC}\n";
-if zypper --gpg-auto-import-keys addrepo "https://download.opensuse.org/repositories/filesystems/${fs_repo}/filesystems.repo";
-then if zypper refresh;
+if zypper addrepo "https://download.opensuse.org/repositories/filesystems/${fs_repo}/filesystems.repo";
+then if zypper --gpg-auto-import-keys refresh;
      then :;
      else printf "${RED}ERROR: Refresh repositories.${NC}\n"; exit 1;
      fi
@@ -103,7 +103,7 @@ then zpool_opts="$ZPOOL_OPT -O mountpoint=/boot";
        rpool_parts="$rpool_parts $rp_part";
        e=$((e+1));
      done
-     zpool create $RPOOL_OPT -R /mnt "$RPOOL_NAME" "$ZPOOL_TYPE" $rpool_parts;
+     zpool create $RPOOL_OPT -R /mnt "$RPOOL_NAME" $ZPOOL_TYPE $rpool_parts;
 else zpool_opts="$ZPOOL_OPT -O mountpoint=/";
 fi
 
@@ -116,7 +116,7 @@ do
   zpool_parts="$zpool_parts $bp_part";
   d=$((d+1));
 done
-zpool create $zpool_opts -R /mnt "$ZPOOL_NAME" "$ZPOOL_TYPE" $zpool_parts;
+zpool create $zpool_opts -R /mnt "$ZPOOL_NAME" $ZPOOL_TYPE $zpool_parts;
 
 printf "${GREEN}Please, check pools validity:${NC}\n";
 zpool status;
@@ -213,6 +213,8 @@ else :;
 fi
 mkdir /mnt/etc/zfs -p;
 cp /etc/zfs/zpool.cache /mnt/etc/zfs/;
+chmod a-w /mnt/etc/zfs/zpool.cache;
+chattr +i /mnt/etc/zfs/zpool.cache;
 
 printf "${GREEN}Please, check created filesystems:${NC}\n";
 zfs list;
@@ -237,21 +239,21 @@ then fs_repo_long="tumbleweed";
      then :;
      else printf "${RED}ERROR: Can't add repository update to the new system.${NC}\n"; exit 1;
      fi
-else fs_repo_long="distribution/leap/$fs_repo";
-     if zypper --root /mnt addrepo "http://download.opensuse.org/${fs_repo_long}/oss" update-os;
+else fs_repo_long="leap/$fs_repo";
+     if zypper --root /mnt addrepo "http://download.opensuse.org/update/${fs_repo_long}/oss" update-os;
      then :;
      else printf "${RED}ERROR: Can't add repository update-os to the new system.${NC}\n"; exit 1;
      fi
-     if zypper --root /mnt addrepo "http://download.opensuse.org/${fs_repo_long}/non-oss" update-nonos;
+     if zypper --root /mnt addrepo "http://download.opensuse.org/update/${fs_repo_long}/non-oss" update-nonos;
      then :;
      else printf "${RED}ERROR: Can't add repository update-nonos to the new system.${NC}\n"; exit 1;
      fi
 fi
-if zypper --root /mnt addrepo "http://download.opensuse.org/${fs_repo_long}/repo/non-oss" non-os;
+if zypper --root /mnt addrepo "http://download.opensuse.org/distribution/${fs_repo_long}/repo/non-oss" non-os;
 then :;
 else printf "${RED}ERROR: Can't add repository non-os to the new system.${NC}\n"; exit 1;
 fi
-if zypper --root /mnt addrepo "http://download.opensuse.org/${fs_repo_long}/repo/oss" os;
+if zypper --root /mnt addrepo "http://download.opensuse.org/distribution/${fs_repo_long}/repo/oss" os;
 then :;
 else printf "${RED}ERROR: Can't add repository os to the new system.${NC}\n"; exit 1;
 fi
@@ -341,7 +343,8 @@ if [ -e /mnt/etc/zypp/repos.d/filesystems.repo ]
 then :;
 elif chroot /mnt zypper addrepo "https://download.opensuse.org/repositories/filesystems/${fs_repo}/filesystems.repo";
 then if chroot /mnt zypper --gpg-auto-import-keys refresh;
-     then chroot /mnt zypper install -y zfs;
+     then chroot /mnt zypper up -y;
+     chroot /mnt zypper install -y zfs zfs-kmp-default;
      else printf "${RED}ERROR: Refresh repositories.${NC}\n"; exit 1;
      fi
 else printf "${RED}ERROR: Add filesystems repository.${NC}\n"; exit 1;
@@ -399,8 +402,8 @@ kern_install_func () {
 printf "${ORANGE}06. KERNEL INSTALLATION.${NC}\n";
 echo 'zfs' > /mnt/etc/modules-load.d/zfs.conf;
 echo 'add_dracutmodules+=" zfs "' > /mnt/etc/dracut.conf.d/zfs.conf
-kernel_version=$(find /mnt/boot/vmlinuz-* | grep -Eo '[[:digit:]]\.[[:digit:]]{1,2}\.[[:digit:]]{1,2}\-[[:digit:]]{1,2}*-default');
-dracut –kver "$kernel_version" –force –add-drivers "zfs";
+kernel_version=$(find /mnt/boot/vmlinuz-* | grep -Eo '[[:digit:]]*\.[[:digit:]]*\.[[:digit:]]*\-[[:digit:]]*\.*[[:digit:]]*\-default');
+#dracut –kver "$kernel_version" –force –add-drivers "zfs";
 if chroot /mnt kernel-install add "$kernel_version" "/boot/vmlinuz-${kernel_version}";
 then :;
 else printf "${RED}ERROR: Kernel install error, check installed version.${NC}\n"; exit 1;
@@ -421,15 +424,13 @@ then chroot /mnt zypper install -y grub2;
 #     mkdir /mnt/root/lroz;
 #     cp ./files/initrd.sh /mnt/root/lroz/;
 #     chroot /mnt /root/lroz/initrd.sh;
-     chmod a-w /mnt/etc/zfs/zpool.cache;
-     chattr +i /mnt/etc/zfs/zpool.cache;
      chroot /mnt update-bootloader;
      chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg;
-     b=0;
-     while [ "$b" -lt "$DISK_NUM" ]
+     g=0;
+     while [ "$g" -lt "$DISK_NUM" ]
      do	
-       eval chroot /mnt grub2-install '$DISK_'$b;
-       b=$((b+1));
+       eval chroot /mnt grub2-install '$DISK_'$g;
+       g=$((b+1));
      done
 elif [ "$BOOT_TYPE" -eq 2 ]     
 then if [ "$BOOT_LOADER" -eq 1 ]
@@ -476,11 +477,11 @@ sed -Ei "s|/mnt/?|/|" /mnt/etc/zfs/zfs-list.cache/*;
 }
 
 cache_pool_func () {
-a=0;
-while [ "$a" -lt 4 ]
+f=0;
+while [ "$f" -lt 4 ]
 do	 
   cat "/mnt/etc/zfs/zfs-list.cache/$1";
-  if [ $a -lt 1 ] 
+  if [ $f -lt 1 ] 
   then printf "${GREEN}Do you see all $1 filesystems? (y/n)${NC}\n";
   else printf "${GREEN}And now? (y/n)${NC}\n";
   fi
@@ -488,7 +489,7 @@ do
   case "$user_reply" in 
 	y|Y) printf "${BLUE}Ok, continue...${NC}\n";
 	break;; 
-	n|N) if [ $a -eq 3 ]
+	n|N) if [ $f -eq 3 ]
 	     then printf "${ORANGE}You need manually check cache creating.
 	     After resolving cache problem, run script again by:
              ${PURPLE}lroz.sh 8${NC}\n";
@@ -499,14 +500,14 @@ do
 	*) printf "${RED}No user reply, stopping.${NC}\n";
 	exit 1;;
   esac
-  a=$((a+1));
+  f=$((f+1));
 done
 }
 
 add_config_func () {
 printf "${ORANGE}09. ADDITIONAL CONFIGURATION.${NC}\n";
 printf "${BLUE}Installing extra packages...${NC}\n";
-zypper install -y $EXTRA_PACK;
+chroot /mnt zypper install -y $EXTRA_PACK;
 
 if [ "$INITIAL_SNAP" = 1 ]
 then printf "${BLUE}Creating initial snapshots...${NC}\n";
