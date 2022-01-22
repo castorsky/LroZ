@@ -19,6 +19,10 @@ cd ./LroZ
 ```
 vim lroz.conf
 ```
+or
+```
+nano lroz.conf
+```
 5. Run setup:
 ./lroz.sh
 
