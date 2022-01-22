@@ -32,17 +32,20 @@ fi
 
 disk_format_func () {
 printf "${ORANGE}02. DISK FORMATTING.${NC}\n";
-printf "${GREEN}You need to clean disk manually, if it used in a MD array.
-Proceed installation? (y/n)${NC}\n";
-read -r user_reply;
-case "$user_reply" in 
+if [ "$SILENT" -eq 1 ]
+then :;
+else printf "${GREEN}You need to clean disk manually, if it used in a MD array.
+	Proceed installation? (y/n)${NC}\n";
+     read -r user_reply;
+     case "$user_reply" in 
 	y|Y) printf "${BLUE}Ok, continue...${NC}\n";
 	;; 
 	n|N) printf "${BLUE}Ok, stopping.${NC}\n"; 
 	exit 0;; 
 	*) printf "${RED}No user reply, stopping.${NC}\n";
 	exit 1;;
-esac
+     esac
+fi     
 printf "${BLUE}Cleaning partitions...${NC}\n";
 a=0;
 while [ "$a" -lt "$DISK_NUM" ]
@@ -74,23 +77,36 @@ do
   b=$((b+1));
 done
 
-printf "${GREEN}Please, check partitioning validity:${NC}\n";
-c=0;
-while [ "$c" -lt "$DISK_NUM" ]
-do	
-  eval sgdisk --print '$DISK_'$c;
-  c=$((c+1));
-done
-printf "${GREEN}Partition table(s) look right? Proceed? (y/n)${NC}\n";
-read -r user_reply;
-case "$user_reply" in 
+if [ "$SILENT" -eq 1 ]
+then c=0;
+     while [ "$c" -lt "$DISK_NUM" ]
+     do
+       if eval sgdisk --print '$DISK_'$c | grep "BF00";
+       then :;
+       else printf "${RED}Seems, that you have problem with partitions
+	       at the DISK number $c.
+	       Please, check them manually.${NC}\n"; exit 1;
+       fi
+       c=$((c+1));
+     done	
+else printf "${GREEN}Please, check partitioning validity:${NC}\n";
+     c=0;
+     while [ "$c" -lt "$DISK_NUM" ]
+     do	
+       eval sgdisk --print '$DISK_'$c;
+       c=$((c+1));
+     done
+     printf "${GREEN}Partition table(s) look right? Proceed? (y/n)${NC}\n";
+     read -r user_reply;
+     case "$user_reply" in 
 	y|Y) printf "${BLUE}Ok, continue...${NC}\n";
 	;; 
 	n|N) printf "${BLUE}Ok, stopping.${NC}\n"; 
 	exit 0;; 
 	*) printf "${RED}No user reply, stopping.${NC}\n";
 	exit 1;;
-esac
+     esac
+fi     
 
 if [ "$BOOT_PART" -eq 1 ]
 then zpool_opts="$ZPOOL_OPT -O mountpoint=/boot";
@@ -118,18 +134,25 @@ do
 done
 zpool create $zpool_opts -R /mnt "$ZPOOL_NAME" $ZPOOL_TYPE $zpool_parts;
 
-printf "${GREEN}Please, check pools validity:${NC}\n";
-zpool status;
-printf "${GREEN}ZFS pool(s) look right? Proceed? (y/n)${NC}\n";
-read -r user_reply;
-case "$user_reply" in 
+if [ "$SILENT" -eq 1 ]
+then if zpool status | grep "$ZPOOL_NAME";
+     then :;
+     else printf "${RED}Seems, that you have problem with zfs pool creating. 
+	     Please, check them manually.${NC}\n"; exit 1;
+     fi
+else printf "${GREEN}Please, check pools validity:${NC}\n";
+     zpool status;
+     printf "${GREEN}ZFS pool(s) look right? Proceed? (y/n)${NC}\n";
+     read -r user_reply;
+     case "$user_reply" in 
 	y|Y) printf "${BLUE}Ok, continue...${NC}\n";
 	;; 
 	n|N) printf "${BLUE}Ok, stopping.${NC}\n"; 
 	exit 0;; 
 	*) printf "${RED}No user reply, stopping.${NC}\n";
 	exit 1;;
-esac
+     esac
+fi     
 }
 
 create_fs_func () {
@@ -216,18 +239,25 @@ cp /etc/zfs/zpool.cache /mnt/etc/zfs/;
 chmod a-w /mnt/etc/zfs/zpool.cache;
 chattr +i /mnt/etc/zfs/zpool.cache;
 
-printf "${GREEN}Please, check created filesystems:${NC}\n";
-zfs list;
-printf "${GREEN}ZFS filesystems look right? Proceed? (y/n)${NC}\n";
-read -r user_reply;
-case "$user_reply" in 
+if [ "$SILENT" -eq 1 ]
+then if zfs list | grep "$ZPOOL_NAME/ROOT";
+     then :;
+     else printf "${RED}Seems, that you have problem with zfs filesystems creating. 
+	     Please, check them manually.${NC}\n"; exit 1;
+     fi
+else printf "${GREEN}Please, check created filesystems:${NC}\n";
+     zfs list;
+     printf "${GREEN}ZFS filesystems look right? Proceed? (y/n)${NC}\n";
+     read -r user_reply;
+     case "$user_reply" in 
 	y|Y) printf "${BLUE}Ok, continue...${NC}\n";
 	;; 
 	n|N) printf "${BLUE}Ok, stopping.${NC}\n"; 
 	exit 0;; 
 	*) printf "${RED}No user reply, stopping.${NC}\n";
 	exit 1;;
-esac
+     esac
+fi     
 }
 
 sys_install_func () {
@@ -409,6 +439,11 @@ then :;
 else printf "${RED}ERROR: Kernel install error, check installed version.${NC}\n"; exit 1;
 fi	
 chroot /mnt mkinitrd;
+for directory in /mnt/lib/modules/*; 
+do
+  kernel_version=$(basename $directory);
+  chroot /mnt dracut --force --kver $kernel_version;
+done
 }
 
 bl_install_func () {
@@ -481,12 +516,19 @@ f=0;
 while [ "$f" -lt 4 ]
 do	 
   cat "/mnt/etc/zfs/zfs-list.cache/$1";
-  if [ $f -lt 1 ] 
-  then printf "${GREEN}Do you see all $1 filesystems? (y/n)${NC}\n";
-  else printf "${GREEN}And now? (y/n)${NC}\n";
-  fi
-  read -r user_reply;
-  case "$user_reply" in 
+  if [ "$SILENT" -eq 1 ]
+  then if grep "$ZPOOL_NAME" "/mnt/etc/zfs/zfs-list.cache/$1";
+       then break;
+       elif [ $f -eq 3 ]
+       then printf "${ORANGE}You need manually check cache creating.
+       After resolving cache problem, run script again by:
+       ${PURPLE}lroz.sh 8${NC}\n";
+       chroot /mnt pkill zed; exit 1;
+       else zfs set "canmount=$2" "$1/BOOT/suse"; sleep 10;
+       fi
+  else printf "${GREEN}Do you see all $1 filesystems? (y/n)${NC}\n";
+       read -r user_reply;
+       case "$user_reply" in 
 	y|Y) printf "${BLUE}Ok, continue...${NC}\n";
 	break;; 
 	n|N) if [ $f -eq 3 ]
@@ -500,6 +542,7 @@ do
 	*) printf "${RED}No user reply, stopping.${NC}\n";
 	exit 1;;
   esac
+  fi
   f=$((f+1));
 done
 }
@@ -651,6 +694,8 @@ disk_format_func;
 create_fs_func;
 sys_install_func;
 sys_config_func;
+kern_install_func;
+bl_install_func;
 kern_install_func;
 bl_install_func;
 fs_config_func;
