@@ -404,7 +404,7 @@ then printf "${BLUE}Preparing boot partition...${NC}\n";
      mkdir /mnt/boot/efi;
      if grep efi /mnt/etc/fstab;
      then :;
-     else echo "/dev/disk/by-id/${DISK_0}-part1 /boot/efi vfat defaults 0 0" >> /mnt/etc/fstab;
+     else echo "${DISK_0}-part1 /boot/efi vfat defaults 0 0" >> /mnt/etc/fstab;
      fi
      chroot /mnt mount /boot/efi;
 elif [ "$BOOT_TYPE" -eq 1 ]
