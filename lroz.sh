@@ -559,11 +559,6 @@ if [ "$GRUB_OPT" -eq  1 ]
 then sed -i "s|^#GRUB_TERMINAL|GRUB_TERMINAL|" /mnt/etc/default/grub;
 else :;
 fi
-
-if [ "$SSHD_ENABLE" -eq 1 ]
-then chroot /mnt systemctl enable sshd;
-else :;
-fi
 }
 
 finish_func () {
