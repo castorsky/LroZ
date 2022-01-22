@@ -21,3 +21,6 @@ vim lroz.conf
 ```
 5. Run setup:
 ./lroz.sh
+
+Thanx:
+files/genhostid.sh script taken from [openzfs project](https://github.com/openzfs/zfs/files/4537537/genhostid.sh.gz)
