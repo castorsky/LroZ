@@ -9,8 +9,8 @@ printf "${BLUE}Initial cleaning...${NC}\n";
 rm -f /etc/zypp/repos.d/filesystems.repo;
 
 printf "${BLUE}Adding and refreshing repository...${NC}\n";
-if zypper addrepo "$REPO/repositories/filesystems/${repo_rel}/filesystems.repo" >> ./lroz.log 2>&1;
-then if zypper --gpg-auto-import-keys refresh >> ./lroz.log 2>&1;
+if zypper addrepo "$REPO/repositories/filesystems/${repo_rel}/filesystems.repo";
+then if zypper --gpg-auto-import-keys refresh;
      then :;
      else printf "${RED}ERROR: Refresh repositories.${NC}\n"; exit 1;
      fi
@@ -21,8 +21,8 @@ fi
 gsettings set org.gnome.desktop.media-handling automount false;
 
 printf "${BLUE}Installing additional packages...${NC}\n";
-if zypper install -y zfs zfs-kmp-default gdisk dkms >> ./lroz.log 2>&1;
-then if modprobe zfs >> ./lroz.log 2>&1;
+if zypper install -y zfs zfs-kmp-default gdisk dkms;
+then if modprobe zfs;
      then :;
      else printf "${RED}ERROR: Add kernel module.${NC}\n"; exit 1;
      fi
@@ -330,8 +330,6 @@ if grep "$HOST_NAME" /mnt/etc/hosts;
 then printf "127.0.1.1	$HOST_FQDN $HOST_NAME" >> /mnt/etc/hosts;
 else :;
 fi
-rm /mnt/etc/resolv.conf;
-cp /etc/resolv.conf /mnt/etc/;
 mount --make-private --rbind /dev  /mnt/dev;
 mount --make-private --rbind /proc /mnt/proc;
 mount --make-private --rbind /sys  /mnt/sys;
@@ -341,7 +339,7 @@ printf "${BLUE}Starting chroot configuration...${NC}\n";
 chroot /mnt ln -s /proc/self/mounts /etc/mtab;
 
 printf "${BLUE}Refreshing repositories under chroot...${NC}\n";
-if chroot /mnt zypper refresh;
+if zypper --root /mnt refresh;
 then :;
 else printf "${RED}ERROR: Cant refesh repositories.${NC}\n";
 fi
@@ -366,16 +364,16 @@ else printf "${ORANGE}Seems, that you have a problem with a ${CYAN}C${ORANGE} lo
 fi
 	       
 printf "${BLUE}Reinstalling some packages for stability...${NC}\n"
-chroot /mnt zypper install -fy permissions iputils ca-certificates ca-certificates-mozilla pam shadow dbus-1 libutempter0 suse-module-tools util-linux;
-chroot /mnt zypper install -y kernel-default kernel-firmware;
+zypper --root /mnt install -fy permissions iputils ca-certificates ca-certificates-mozilla pam shadow dbus-1 libutempter0 suse-module-tools util-linux;
+zypper --root /mnt install -y kernel-default kernel-firmware;
 
 printf "${BLUE}Adding and refresh filesystem repository...${NC}\n";
 if [ -e /mnt/etc/zypp/repos.d/filesystems.repo ] 
 then :;
-elif chroot /mnt zypper addrepo "$REPO/repositories/filesystems/${repo_rel}/filesystems.repo";
-then if chroot /mnt zypper --gpg-auto-import-keys refresh;
-     then chroot /mnt zypper up -y;
-     chroot /mnt zypper install -y zfs zfs-kmp-default;
+elif zypper --root /mnt addrepo "$REPO/repositories/filesystems/${repo_rel}/filesystems.repo";
+then if zypper --root /mnt --gpg-auto-import-keys refresh;
+     then zypper --root /mnt up -y;
+     zypper --root /mnt install -y zfs zfs-kmp-default;
      else printf "${RED}ERROR: Refresh repositories.${NC}\n"; exit 1;
      fi
 else printf "${RED}ERROR: Add filesystems repository.${NC}\n"; exit 1;
@@ -408,7 +406,7 @@ else :;
 fi
 
 if [ "$BOOT_LOADER" -eq 1 ]
-then chroot /mnt zypper install -y grub2;
+then zypper --root /mnt install -y grub2;
 else :;
 fi
 
@@ -510,7 +508,6 @@ cache_pool_func () {
 f=0;
 while [ "$f" -lt 4 ]
 do	 
-  cat "/mnt/etc/zfs/zfs-list.cache/$1";
   if [ "$SILENT" -eq 1 ]
   then if grep "$ZPOOL_NAME" "/mnt/etc/zfs/zfs-list.cache/$1";
        then break;
@@ -521,7 +518,8 @@ do
        chroot /mnt pkill zed; exit 1;
        else zfs set "canmount=$2" "$1/BOOT/suse"; sleep 10;
        fi
-  else printf "${GREEN}Do you see all $1 filesystems? (y/n)${NC}\n";
+  else cat "/mnt/etc/zfs/zfs-list.cache/$1";
+       printf "${GREEN}Do you see all $1 filesystems? (y/n)${NC}\n";
        read -r user_reply;
        case "$user_reply" in 
 	y|Y) printf "${BLUE}Ok, continue...${NC}\n";
@@ -545,7 +543,7 @@ done
 add_config_func () {
 printf "${ORANGE}09. ADDITIONAL CONFIGURATION.${NC}\n";
 printf "${BLUE}Installing extra packages...${NC}\n";
-chroot /mnt zypper install -y $EXTRA_PACK;
+zypper --root /mnt install -y $EXTRA_PACK;
 
 if [ "$INITIAL_SNAP" -eq 1 ]
 then printf "${BLUE}Creating initial snapshots...${NC}\n";
@@ -613,7 +611,7 @@ fi
 if [ "$BOOT_PART" -eq 1 ]
 then zp_name="$RPOOL_NAME";
 else zp_name="$ZPOOL_NAME";
-fi	
+fi
 
 func=${1:-0};
 
