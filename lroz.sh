@@ -475,7 +475,7 @@ then if [ "$BOOT_LOADER" -eq 1 ]
 	  chown root:root /mnt/boot/efi/loader/entries/openSUSE_Leap.conf;
 	  chmod 755 /mnt/boot/efi/loader/entries/openSUSE_Leap.conf;
 	  mkdir /mnt/boot/efi/EFI/openSUSE;
-	  cp -t /mnt/boot/efi/EFI/openSUSE /mnt/boot/vmlinuz /mnt/root/initrd;
+	  chroot /mnt cp -t /boot/efi/EFI/openSUSE /boot/vmlinuz /root/initrd;
 	  chroot /mnt bootctl update;
      else printf "${RED}ERROR: Check BOOT_LOADER variable.${NC}\n"; exit 1;
      fi
