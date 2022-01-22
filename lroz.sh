@@ -408,8 +408,11 @@ then printf "${BLUE}Preparing boot partition...${NC}\n";
 else :;
 fi
 
-printf "${GREEN}Set a root password:${NC}\n";
-chroot /mnt passwd;
+if [ "$SILENT" -eq 1 ]
+then echo "root:$ROOT_PASSWD" | chpasswd --root /mnt;
+else printf "${GREEN}Set a root password:${NC}\n";
+     passwd --root /mnt;
+fi     
 
 if [ "$BOOT_PART" -eq 1 ]
 then printf "${BLUE}Enabling bpool importing...${NC}\n";
