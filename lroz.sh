@@ -393,7 +393,12 @@ fi
 
 if [ "$BOOT_TYPE" -eq 2 ]
 then printf "${BLUE}Preparing boot partition...${NC}\n";
-## MAY BE dosfstools NEEDS IN OS!
+     if [ "$BOOT_LOADER" -eq 1 ]
+     then zypper --root /mnt install -y grub2-$(uname -m)-efi;
+          echo 'export ZPOOL_VDEV_NAME_PATH=YES' >> /mnt/etc/profile;
+          export ZPOOL_VDEV_NAME_PATH=YES;
+     else :;
+     fi
      zypper install -y dosfstools;
      mkdosfs -F 32 -s 1 -n EFI "${DISK_0}-part1";
      mkdir /mnt/boot/efi;
@@ -402,13 +407,13 @@ then printf "${BLUE}Preparing boot partition...${NC}\n";
      else echo "/dev/disk/by-id/${DISK_0}-part1 /boot/efi vfat defaults 0 0" >> /mnt/etc/fstab;
      fi
      chroot /mnt mount /boot/efi;
+elif [ "$BOOT_TYPE" -eq 1 ]
+then zypper --root /mnt install -y grub2-i386-pc;
+     echo 'export ZPOOL_VDEV_NAME_PATH=YES' >> /mnt/etc/profile;
+     export ZPOOL_VDEV_NAME_PATH=YES;
 else :;
 fi
 
-if [ "$BOOT_LOADER" -eq 1 ]
-then zypper --root /mnt install -y grub2;
-else :;
-fi
 
 if [ "$SILENT" -eq 1 ]
 then echo "root:$ROOT_PASSWD" | chpasswd --root /mnt;
@@ -447,9 +452,7 @@ chroot /mnt mkinitrd;
 bl_install_func () {
 printf "${ORANGE}07. BOOTLOADER INSTALLATION.${NC}\n";
 if [ "$BOOT_TYPE" -eq 1 ]
-then echo 'export ZPOOL_VDEV_NAME_PATH=YES' >> /mnt/etc/profile;
-     export ZPOOL_VDEV_NAME_PATH=YES;
-     chroot /mnt update-bootloader;
+then chroot /mnt update-bootloader;
      chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg;
      g=0;
      while [ "$g" -lt "$DISK_NUM" ]
@@ -459,9 +462,9 @@ then echo 'export ZPOOL_VDEV_NAME_PATH=YES' >> /mnt/etc/profile;
      done
 elif [ "$BOOT_TYPE" -eq 2 ]     
 then if [ "$BOOT_LOADER" -eq 1 ]
-     then printf "${ORANGE}Please, install grub bootloader for UEFI manually. Stopping. 
-     After install bootloader, run script again by:
-     ${PURPLE}lroz.sh 8${NC}\n";
+     then chroot /mnt update-bootloader;
+          chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg;
+          chroot /mnt grub2-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=opensuse --recheck --no-floppy;
      elif [ "$BOOT_LOADER" -eq 2 ]
      then chroot /mnt systemd-machine-id-setup;
 	  chroot /mnt bootctl install;
