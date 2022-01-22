@@ -88,7 +88,8 @@ then c=0;
 	       Please, check them manually.${NC}\n"; exit 1;
        fi
        c=$((c+1));
-     done	
+     done
+     sleep 5;
 else printf "${GREEN}Please, check partitioning validity:${NC}\n";
      c=0;
      while [ "$c" -lt "$DISK_NUM" ]
