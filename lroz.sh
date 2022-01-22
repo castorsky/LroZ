@@ -9,7 +9,7 @@ printf "${BLUE}Initial cleaning...${NC}\n";
 rm -f /etc/zypp/repos.d/filesystems.repo;
 
 printf "${BLUE}Adding and refreshing repository...${NC}\n";
-if zypper addrepo "https://download.opensuse.org/repositories/filesystems/${fs_repo}/filesystems.repo";
+if zypper addrepo "$REPO/repositories/filesystems/${repo_rel}/filesystems.repo";
 then if zypper --gpg-auto-import-keys refresh;
      then :;
      else printf "${RED}ERROR: Refresh repositories.${NC}\n"; exit 1;
@@ -17,7 +17,7 @@ then if zypper --gpg-auto-import-keys refresh;
 else printf "${RED}ERROR: Add repository.${NC}\n"; exit 1;
 fi
 
-## Disable automounting
+## Disable gnome automounting
 gsettings set org.gnome.desktop.media-handling automount false;
 
 printf "${BLUE}Installing additional packages...${NC}\n";
@@ -237,8 +237,8 @@ else :;
 fi
 mkdir /mnt/etc/zfs -p;
 cp /etc/zfs/zpool.cache /mnt/etc/zfs/;
-chmod a-w /mnt/etc/zfs/zpool.cache;
-chattr +i /mnt/etc/zfs/zpool.cache;
+#chmod a-w /mnt/etc/zfs/zpool.cache;
+#chattr +i /mnt/etc/zfs/zpool.cache;
 
 if [ "$SILENT" -eq 1 ]
 then if zfs list | grep "$ZPOOL_NAME/ROOT";
@@ -264,27 +264,27 @@ fi
 sys_install_func () {
 printf "${ORANGE}04. SYSTEM INSTALLATION.${NC}\n";
 printf "${BLUE}Adding repos...${NC}\n";
-if [ "$fs_repo" = "openSUSE_Tumbleweed" ]
-then fs_repo_long="tumbleweed";
-     if zypper --root /mnt addrepo "http://download.opensuse.org/update/${fs_repo_long}/" update;
+if [ "$repo_rel" = "openSUSE_Tumbleweed" ]
+then repo_rel_long="tumbleweed";
+     if zypper --root /mnt addrepo "$REPO/update/${repo_rel_long}/" update;
      then :;
      else printf "${RED}ERROR: Can't add repository update to the new system.${NC}\n"; exit 1;
      fi
-else fs_repo_long="leap/$fs_repo";
-     if zypper --root /mnt addrepo "http://download.opensuse.org/update/${fs_repo_long}/oss" update-os;
+else repo_rel_long="leap/$repo_rel";
+     if zypper --root /mnt addrepo "$REPO/update/${repo_rel_long}/oss" update-os;
      then :;
      else printf "${RED}ERROR: Can't add repository update-os to the new system.${NC}\n"; exit 1;
      fi
-     if zypper --root /mnt addrepo "http://download.opensuse.org/update/${fs_repo_long}/non-oss" update-nonos;
+     if zypper --root /mnt addrepo "$REPO/update/${repo_rel_long}/non-oss" update-nonos;
      then :;
      else printf "${RED}ERROR: Can't add repository update-nonos to the new system.${NC}\n"; exit 1;
      fi
 fi
-if zypper --root /mnt addrepo "http://download.opensuse.org/distribution/${fs_repo_long}/repo/non-oss" non-os;
+if zypper --root /mnt addrepo "$REPO/distribution/${repo_rel_long}/repo/non-oss" non-os;
 then :;
 else printf "${RED}ERROR: Can't add repository non-os to the new system.${NC}\n"; exit 1;
 fi
-if zypper --root /mnt addrepo "http://download.opensuse.org/distribution/${fs_repo_long}/repo/oss" os;
+if zypper --root /mnt addrepo "$REPO/distribution/${repo_rel_long}/repo/oss" os;
 then :;
 else printf "${RED}ERROR: Can't add repository os to the new system.${NC}\n"; exit 1;
 fi
@@ -372,7 +372,7 @@ chroot /mnt zypper install -y kernel-default kernel-firmware;
 printf "${BLUE}Adding and refresh filesystem repository...${NC}\n";
 if [ -e /mnt/etc/zypp/repos.d/filesystems.repo ] 
 then :;
-elif chroot /mnt zypper addrepo "https://download.opensuse.org/repositories/filesystems/${fs_repo}/filesystems.repo";
+elif chroot /mnt zypper addrepo "$REPO/repositories/filesystems/${repo_rel}/filesystems.repo";
 then if chroot /mnt zypper --gpg-auto-import-keys refresh;
      then chroot /mnt zypper up -y;
      chroot /mnt zypper install -y zfs zfs-kmp-default;
@@ -380,8 +380,6 @@ then if chroot /mnt zypper --gpg-auto-import-keys refresh;
      fi
 else printf "${RED}ERROR: Add filesystems repository.${NC}\n"; exit 1;
 fi
-
-## genhostid.sh script taken from https://github.com/openzfs/zfs/files/4537537/genhostid.sh.gz
 
 printf "${BLUE}Generating hostid...${NC}\n";
 zgenhostid -f "$(./files/genhostid.sh)";
@@ -406,6 +404,11 @@ then printf "${BLUE}Preparing boot partition...${NC}\n";
      else echo "/dev/disk/by-id/${DISK_0}-part1 /boot/efi vfat defaults 0 0" >> /mnt/etc/fstab;
      fi
      chroot /mnt mount /boot/efi;
+else :;
+fi
+
+if [ "$BOOT_LOADER" -eq 1 ]
+then chroot /mnt zypper install -y grub2;
 else :;
 fi
 
@@ -435,34 +438,19 @@ fi
 kern_install_func () {
 printf "${ORANGE}06. KERNEL INSTALLATION.${NC}\n";
 echo 'zfs' > /mnt/etc/modules-load.d/zfs.conf;
-echo 'add_dracutmodules+=" zfs "' > /mnt/etc/dracut.conf.d/zfs.conf
 kernel_version=$(find /mnt/boot/vmlinuz-* | grep -Eo '[[:digit:]]*\.[[:digit:]]*\.[[:digit:]]*\-[[:digit:]]*\.*[[:digit:]]*\-default');
-#dracut –kver "$kernel_version" –force –add-drivers "zfs";
 if chroot /mnt kernel-install add "$kernel_version" "/boot/vmlinuz-${kernel_version}";
 then :;
 else printf "${RED}ERROR: Kernel install error, check installed version.${NC}\n"; exit 1;
 fi	
 chroot /mnt mkinitrd;
-for directory in /mnt/lib/modules/*; 
-do
-  kernel_version=$(basename $directory);
-  chroot /mnt dracut --force --kver $kernel_version;
-done
 }
 
 bl_install_func () {
 printf "${ORANGE}07. BOOTLOADER INSTALLATION.${NC}\n";
 if [ "$BOOT_TYPE" -eq 1 ]
-then chroot /mnt zypper install -y grub2;
-     echo 'export ZPOOL_VDEV_NAME_PATH=YES' >> /mnt/etc/profile;
+then echo 'export ZPOOL_VDEV_NAME_PATH=YES' >> /mnt/etc/profile;
      export ZPOOL_VDEV_NAME_PATH=YES;
-#     sed -i "s|rpool=.*|rpool=\`zdb -l \${GRUB_DEVICE} \| grep -E '[[:blank:]]name' \| cut -d\\\' -f 2\`|"  /mnt/etc/grub.d/10_linux;
-     echo 'GRUB_ENABLE_BLSCFG=false' >> /mnt/etc/default/grub;
-#     sed -i "s|^#GRUB_TERMINAL|GRUB_TERMINAL|" /mnt/etc/default/grub;
-#     sed -i "s|^GRUB_CMDLINE_LINUX=.*|GRUB_CMDLINE_LINUX=\"root=ZFS=$zp_name/ROOT/suse\"|" /etc/default/grub;
-#     mkdir /mnt/root/lroz;
-#     cp ./files/initrd.sh /mnt/root/lroz/;
-#     chroot /mnt /root/lroz/initrd.sh;
      chroot /mnt update-bootloader;
      chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg;
      g=0;
@@ -505,7 +493,10 @@ fi
 chroot /mnt ln -s /usr/lib/zfs/zed.d/history_event-zfs-list-cacher.sh /etc/zfs/zed.d;
 chroot /mnt zed -F &
 sleep 5;
-printf "${GREEN}Please, check information about you filesystems:${NC}\n"
+if [ "$SILENT" -eq 1 ]
+then :;
+else printf "${GREEN}Please, check information about you filesystems:${NC}\n"
+fi
 if [ "$BOOT_PART" -eq 1 ]
 then cache_pool_func "$zp_name" "on"; 
      cache_pool_func "$ZPOOL_NAME" "noauto";
@@ -556,13 +547,23 @@ printf "${ORANGE}09. ADDITIONAL CONFIGURATION.${NC}\n";
 printf "${BLUE}Installing extra packages...${NC}\n";
 chroot /mnt zypper install -y $EXTRA_PACK;
 
-if [ "$INITIAL_SNAP" = 1 ]
+if [ "$INITIAL_SNAP" -eq 1 ]
 then printf "${BLUE}Creating initial snapshots...${NC}\n";
      zfs snapshot -r "$zp_name@install";
      if [ "$BOOT_PART" -eq 1 ]
      then zfs snapshot -r "$ZPOOL_NAME@install";
      else :;
      fi
+else :;
+fi
+
+if [ "$GRUB_OPT" -eq  1 ]
+then sed -i "s|^#GRUB_TERMINAL|GRUB_TERMINAL|" /mnt/etc/default/grub;
+else :;
+fi
+
+if [ "$SSHD_ENABLE" -eq 1 ]
+then chroot /mnt systemctl enable sshd;
 else :;
 fi
 }
@@ -576,13 +577,11 @@ printf "${BLUE}Unmounting and exporting zpools...${NC}\n";
 mount | grep -v zfs | tac | awk '/\/mnt/ {print $3}' | xargs -i{} umount -lf {};
 zpool export -a;
 sleep 10;
-#rm /etc/hostid;
-#zgenhostid 00000000;
 rm /etc/zfs/zpool.cache;
 
 printf "${ORANGE}After boot to the new installed System,
 to do some after-installation steps, run:
-/root/install/lroz_firstboot.sh${NC}\n";
+/root/lroz/firstboot.sh${NC}\n";
 
 printf "${GREEN}Do you want to reboot, now? (y/n)
 y - for reboot
@@ -605,9 +604,9 @@ else printf "${RED}You must run script as root! Exiting.${NC}\n"; exit 1;
 fi
 
 if [ "$(lsb_release -d | grep -o 'Leap')" = "Leap" ]
-then fs_repo=$(lsb_release -rs);
+then repo_rel=$(lsb_release -rs);
 elif [ "$(lsb_release -d | grep -o 'Tumbleweed')" = "Tumbleweed" ]
-then fs_repo="openSUSE_Tumbleweed";
+then repo_rel="openSUSE_Tumbleweed";
 else printf "${RED}openSUSE release definition error ! Exiting.${NC}\n"; exit 1;
 fi
 
@@ -616,43 +615,46 @@ then zp_name="$RPOOL_NAME";
 else zp_name="$ZPOOL_NAME";
 fi	
 
-if [ "$1" -eq 1 ]
+func=${1:-0};
+ 
+
+if [ "$func" -eq 1 ]
 then prep_func; exit 0;
 else :;
 fi	
-if [ "$1" -eq 2 ]
+if [ "$func" -eq 2 ]
 then disk_format_func; exit 0;
 else :;
 fi	
-if [ "$1" -eq 3 ]
+if [ "$func" -eq 3 ]
 then create_fs_func; exit 0;
 else :;
 fi	
-if [ "$1" -eq 4 ]
+if [ "$func" -eq 4 ]
 then sys_install_func; exit 0;
 else :;
 fi	
-if [ "$1" -eq 5 ]
+if [ "$func" -eq 5 ]
 then sys_config_func; exit 0;
 else :;
 fi	
-if [ "$1" -eq 6 ]
+if [ "$func" -eq 6 ]
 then kern_install_func; exit 0;
 else :;
 fi	
-if [ "$1" -eq 7 ]
+if [ "$func" -eq 7 ]
 then bl_install_func; exit 0;
 else :;
 fi	
-if [ "$1" -eq 8 ]
+if [ "$func" -eq 8 ]
 then fs_config_func; exit 0;
 else :;
 fi	
-if [ "$1" -eq 9 ]
+if [ "$func" -eq 9 ]
 then add_config_func; exit 0;
 else :;
 fi	
-if [ "$1" -eq 10 ]
+if [ "$func" -eq 10 ]
 then finish_func; exit 0;
 else :;
 fi	
@@ -664,7 +666,8 @@ Also you need to start this script as root.
 And finally you must to set a preferred values
 for variables in lroz.conf!
 Please check, that all .sh files
-of installation scripts are executables. 
+of installation scripts are executables.
+zpools must be destroyed on DISKs for the installed system MANUALLY!
 ${GREEN}If you want continue by ssh,
 you need install openssh-server, enable pass and start service:
 ${PURPLE}sudo zypper in -y openssh-server
@@ -698,8 +701,6 @@ disk_format_func;
 create_fs_func;
 sys_install_func;
 sys_config_func;
-kern_install_func;
-bl_install_func;
 kern_install_func;
 bl_install_func;
 fs_config_func;
