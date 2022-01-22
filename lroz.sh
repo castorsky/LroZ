@@ -9,8 +9,8 @@ printf "${BLUE}Initial cleaning...${NC}\n";
 rm -f /etc/zypp/repos.d/filesystems.repo;
 
 printf "${BLUE}Adding and refreshing repository...${NC}\n";
-if zypper addrepo "$REPO/repositories/filesystems/${repo_rel}/filesystems.repo";
-then if zypper --gpg-auto-import-keys refresh;
+if zypper addrepo "$REPO/repositories/filesystems/${repo_rel}/filesystems.repo" >> ./lroz.log 2>&1;
+then if zypper --gpg-auto-import-keys refresh >> ./lroz.log 2>&1;
      then :;
      else printf "${RED}ERROR: Refresh repositories.${NC}\n"; exit 1;
      fi
@@ -21,8 +21,8 @@ fi
 gsettings set org.gnome.desktop.media-handling automount false;
 
 printf "${BLUE}Installing additional packages...${NC}\n";
-if zypper install -y zfs zfs-kmp-default gdisk dkms;
-then if modprobe zfs;
+if zypper install -y zfs zfs-kmp-default gdisk dkms >> ./lroz.log 2>&1;
+then if modprobe zfs >> ./lroz.log 2>&1;
      then :;
      else printf "${RED}ERROR: Add kernel module.${NC}\n"; exit 1;
      fi
@@ -616,7 +616,6 @@ else zp_name="$ZPOOL_NAME";
 fi	
 
 func=${1:-0};
- 
 
 if [ "$func" -eq 1 ]
 then prep_func; exit 0;
@@ -667,7 +666,7 @@ And finally you must to set a preferred values
 for variables in lroz.conf!
 Please check, that all .sh files
 of installation scripts are executables.
-zpools must be destroyed on DISKs for the installed system MANUALLY!
+ZPOOLs on the DISKs used to install the system must be MANUALLY cleaned!
 ${GREEN}If you want continue by ssh,
 you need install openssh-server, enable pass and start service:
 ${PURPLE}sudo zypper in -y openssh-server
