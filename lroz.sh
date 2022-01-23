@@ -466,7 +466,8 @@ then if [ "$BOOT_LOADER" -eq 1 ]
           chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg;
           chroot /mnt grub2-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=opensuse --recheck --no-floppy;
      elif [ "$BOOT_LOADER" -eq 2 ]
-     then chroot /mnt systemd-machine-id-setup;
+     then chroot /mnt update-bootloader;
+          chroot /mnt systemd-machine-id-setup;
 	  chroot /mnt bootctl install;
 	  cp ./files/loader.conf /mnt/boot/efi/loader/;
 	  chown root:root /mnt/boot/efi/loader/loader.conf;
