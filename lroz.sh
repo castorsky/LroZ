@@ -472,6 +472,7 @@ then if [ "$BOOT_LOADER" -eq 1 ]
 	  cp ./files/loader.conf /mnt/boot/efi/loader/;
 	  chown root:root /mnt/boot/efi/loader/loader.conf;
 	  chmod 755 /mnt/boot/efi/loader/loader.conf;
+          sed -i "s/zfs:.*\/suse/zfs\:$zp_name\/ROOT\/suse/" ./files/openSUSE_Leap.conf 
 	  cp ./files/openSUSE_Leap.conf /mnt/boot/efi/loader/entries/;
 	  chown root:root /mnt/boot/efi/loader/entries/openSUSE_Leap.conf;
 	  chmod 755 /mnt/boot/efi/loader/entries/openSUSE_Leap.conf;
