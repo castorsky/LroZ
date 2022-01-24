@@ -24,8 +24,9 @@ or
 nano lroz.conf
 ```
 5. Run setup:
+```
 ./lroz.sh
-
+```
 **Notes:**
 
 [zpool features grub2 compability list](https://github.com/openzfs/zfs/blob/master/cmd/zpool/compatibility.d/grub2)
