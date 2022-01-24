@@ -30,21 +30,35 @@ printf "${BLUE}Generating kernel update script...${NC}\n";
 kus="/root/kernel_update.sh";
 echo '#!/bin/bash
 kernel-install add $(uname -r) /boot/vmlinuz-$(uname -r);
-mkinitrd;
-update-bootloader;' > $kus;
-if [ "$BOOT_LOADER" -eq 2 ]
-then echo 'cp -t /boot/efi/EFI/openSUSE /boot/vmlinuz /root/initrd;
-bootctl update;
-mv /boot/efi/loader/entries/${cat /etc/machine-id}* /root/bootbak/;' >> $kus;
-else :;
-fi
-if [ "$BOOT_TYPE" -eq 2 ]
-then echo 'umount /boot/efi;' >> $kus;
+mkinitrd;' > $kus;
+if [ "$BOOT_TYPE" -eq 1 ]
+then echo 'update-bootloader;
+grub2-mkconfig -o /boot/grub2/grub.cfg;' >> $kus;
+     a=0;
+     while [ "$a" -lt "$DISK_NUM" ]
+     do
+	eval ofdisk='$DISK_'$a;
+	echo "grub2-install ${ofdisk};" >> $kus;
+	a=$((a+1));
+     done
+elif [ "$BOOT_TYPE" -eq 2 ]
+then if [ "$BOOT_LOADER" -eq 1 ]
+     then echo 'update-bootloader;
+     grub2-mkconfig -o /boot/grub2/grub.cfg;
+     grub2-install --target=$(uname -m)-efi --efi-directory=/boot/efi --bootloader-id=opensuse --recheck --no-floppy;' >> $kus
+     elif [ "$BOOT_LOADER" -eq 2 ]
+     then echo 'cp -t /boot/efi/EFI/openSUSE /boot/vmlinuz /root/initrd;
+     bootctl update;
+     mv /boot/efi/loader/entries/${cat /etc/machine-id}* /root/bootbak/;' >> $kus;
+     else :;
+     fi
+     echo 'umount /boot/efi;' >> $kus;
      b=1;
      while [ "$b" -lt "$DISK_NUM" ]
      do	
        eval ofdisk='$DISK_'$b;
        echo "dd if=${DISK_0}-part1 of=${ofdisk}-part1;" >> $kus;
+       b=$((b+1));
      done
      echo "mount /boot/efi;" >> $kus;
 else :;
@@ -55,9 +69,9 @@ read -r user_reply;
 case "$user_reply" in
 	y|Y) printf "${BLUE}Please, enter the size of swap? (4G, for example)${NC}\n";
 	read -r swap_size; 
-	zfs create -V "$swap_size" -b "$(getconf PAGESIZE)" -o compression=zle -o logbias=throughput -o sync=always -o primarycache=metadata -o secondarycache=none -o com.sun:auto-snapshot=false rpool/swap;
-	mkswap -f /dev/zvol/rpool/swap;
-	echo '/dev/zvol/rpool/swap none swap discard 0 0' >> /etc/fstab;
+	zfs create -V "$swap_size" -b "$(getconf PAGESIZE)" -o compression=zle -o logbias=throughput -o sync=always -o primarycache=metadata -o secondarycache=none -o com.sun:auto-snapshot=false "${ZPOOL_NAME}/swap";
+	mkswap -f "/dev/zvol/${ZPOOL_NAME}/swap";
+	echo "/dev/zvol/${ZPOOL_NAME}/swap none swap discard 0 0" >> /etc/fstab;
 	echo 'RESUME=none' > /etc/initramfs-tools/conf.d/resume;
 	printf "${ORANGE}Please, if you saw warning about uncorrect volblocksize,
 	recreate swap device after finishing this script by:

@@ -394,7 +394,7 @@ fi
 if [ "$BOOT_TYPE" -eq 2 ]
 then printf "${BLUE}Preparing boot partition...${NC}\n";
      if [ "$BOOT_LOADER" -eq 1 ]
-     then zypper --root /mnt install -y grub2-$(uname -m)-efi;
+     then zypper --root /mnt install -y "grub2-$(uname -m)-efi";
           echo 'export ZPOOL_VDEV_NAME_PATH=YES' >> /mnt/etc/profile;
           export ZPOOL_VDEV_NAME_PATH=YES;
      else :;
@@ -464,22 +464,36 @@ elif [ "$BOOT_TYPE" -eq 2 ]
 then if [ "$BOOT_LOADER" -eq 1 ]
      then chroot /mnt update-bootloader;
           chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg;
-          chroot /mnt grub2-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=opensuse --recheck --no-floppy;
+          chroot /mnt grub2-install --target="$(uname -m)-efi" --efi-directory=/boot/efi --bootloader-id=opensuse --recheck --no-floppy;
      elif [ "$BOOT_LOADER" -eq 2 ]
      then chroot /mnt update-bootloader;
           chroot /mnt systemd-machine-id-setup;
 	  chroot /mnt bootctl install;
+	  sed -i "s/openSUSE.conf/openSUSE_${name_rel}.conf/" ./files/loader.conf
 	  cp ./files/loader.conf /mnt/boot/efi/loader/;
 	  chown root:root /mnt/boot/efi/loader/loader.conf;
 	  chmod 755 /mnt/boot/efi/loader/loader.conf;
-          sed -i "s/zfs:.*\/suse/zfs\:$zp_name\/ROOT\/suse/" ./files/openSUSE_Leap.conf 
-	  cp ./files/openSUSE_Leap.conf /mnt/boot/efi/loader/entries/;
-	  chown root:root /mnt/boot/efi/loader/entries/openSUSE_Leap.conf;
-	  chmod 755 /mnt/boot/efi/loader/entries/openSUSE_Leap.conf;
+	  sed -i "s/openSUSE$/openSUSE ${name_rel}/" ./files/openSUSE.conf
+          sed -i "s/zfs:.*\/suse/zfs\:${zp_name}\/ROOT\/suse/" ./files/openSUSE.conf 
+	  cp ./files/openSUSE.conf "/mnt/boot/efi/loader/entries/openSUSE_${name_rel}.conf";
+	  chown root:root "/mnt/boot/efi/loader/entries/openSUSE_${name_rel}.conf";
+	  chmod 755 "/mnt/boot/efi/loader/entries/openSUSE_${name_rel}.conf";
 	  mkdir /mnt/boot/efi/EFI/openSUSE;
 	  cp -t /mnt/boot/efi/EFI/openSUSE /mnt/boot/vmlinuz /mnt/boot/initrd;
 	  chroot /mnt bootctl update;
      else printf "${RED}ERROR: Check BOOT_LOADER variable.${NC}\n"; exit 1;
+     fi
+     if [ "$DISK_NUM" -gt 1 ]
+     then chroot /mnt umount /boot/efi;
+     h=1;
+     while [ "$h" -lt "$DISK_NUM" ]
+     do	
+       eval ofdisk='$DISK_'$h;
+       dd if="${DISK_0}-part1" of="${ofdisk}-part1";
+       h=$((h+1));
+     done
+     chroot /mnt mount /boot/efi;
+     else :;
      fi
 else printf "${RED}ERROR: Check BOOT_TYPE variable.${NC}\n"; exit 1;
 fi
@@ -601,10 +615,13 @@ then :;
 else printf "${RED}You must run script as root! Exiting.${NC}\n"; exit 1;
 fi
 
+
 if [ "$(lsb_release -d | grep -o 'Leap')" = "Leap" ]
-then repo_rel=$(lsb_release -rs);
+then name_rel="Leap";
+     repo_rel=$(lsb_release -rs);
 elif [ "$(lsb_release -d | grep -o 'Tumbleweed')" = "Tumbleweed" ]
-then repo_rel="openSUSE_Tumbleweed";
+then name_rel="Tumbleweed"
+     repo_rel="openSUSE_Tumbleweed";
 else printf "${RED}openSUSE release definition error ! Exiting.${NC}\n"; exit 1;
 fi
 
