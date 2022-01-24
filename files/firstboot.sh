@@ -1,10 +1,10 @@
 #!/bin/sh
 
-. /root/install/opensuse_install_zfs.conf
+. /root/lroz/lroz.conf
 
 printf "${BLUE}Applying locale...${NC}\n"; 
 localectl set-locale "$LOCALE";
-printf "${GREEN}Do you want to add user account?${NC}\n";
+printf "${GREEN}Do you want to add user account? (y/n)${NC}\n";
 while true
 do
   read -r user_reply;
@@ -23,7 +23,7 @@ do
   cp -a /etc/skel/. "/home/$user_name";
   chown -R "$user_name":"$user_name" "/home/$user_name";
   usermod -a -G audio,cdrom,dip,floppy,netdev,plugdev,sudo,video "$user_name";
-  printf "${GREEN}Do you want to add another user account?${NC}\n";
+  printf "${GREEN}Do you want to add another user account? (y/n)${NC}\n";
 done
 
 printf "${BLUE}Generating kernel update script...${NC}\n";
@@ -64,10 +64,10 @@ then if [ "$BOOT_LOADER" -eq 1 ]
 else :;
 fi     
 
-printf "${GREEN}Do you want to create zfs swap device?${NC}\n";
+printf "${GREEN}Do you want to create zfs swap device? (y/n)${NC}\n";
 read -r user_reply;
 case "$user_reply" in
-	y|Y) printf "${BLUE}Please, enter the size of swap? (4G, for example)${NC}\n";
+	y|Y) printf "${GREEN}Please, enter the size of swap? (4G, for example)${NC}\n";
 	read -r swap_size; 
 	zfs create -V "$swap_size" -b "$(getconf PAGESIZE)" -o compression=zle -o logbias=throughput -o sync=always -o primarycache=metadata -o secondarycache=none -o com.sun:auto-snapshot=false "${ZPOOL_NAME}/swap";
 	mkswap -f "/dev/zvol/${ZPOOL_NAME}/swap";
