@@ -279,12 +279,13 @@ else repo_rel_long="leap/$repo_rel";
      then :;
      else printf "${RED}ERROR: Can't add repository update-nonos to the new system.${NC}\n"; exit 1;
      fi
+     repo_rel_long="distribution/$repo_rel_long";
 fi
-if zypper --root /mnt addrepo "$REPO/distribution/${repo_rel_long}/repo/non-oss" non-os;
+if zypper --root /mnt addrepo "$REPO/$repo_rel_long/repo/non-oss" non-os;
 then :;
 else printf "${RED}ERROR: Can't add repository non-os to the new system.${NC}\n"; exit 1;
 fi
-if zypper --root /mnt addrepo "$REPO/distribution/${repo_rel_long}/repo/oss" os;
+if zypper --root /mnt addrepo "$REPO/$repo_rel_long/repo/oss" os;
 then :;
 else printf "${RED}ERROR: Can't add repository os to the new system.${NC}\n"; exit 1;
 fi
