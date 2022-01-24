@@ -44,12 +44,12 @@ grub2-mkconfig -o /boot/grub2/grub.cfg;' >> $kus;
 elif [ "$BOOT_TYPE" -eq 2 ]
 then if [ "$BOOT_LOADER" -eq 1 ]
      then echo 'update-bootloader;
-     grub2-mkconfig -o /boot/grub2/grub.cfg;
-     grub2-install --target=$(uname -m)-efi --efi-directory=/boot/efi --bootloader-id=opensuse --recheck --no-floppy;' >> $kus
+grub2-mkconfig -o /boot/grub2/grub.cfg;
+grub2-install --target=$(uname -m)-efi --efi-directory=/boot/efi --bootloader-id=opensuse --recheck --no-floppy;' >> $kus
      elif [ "$BOOT_LOADER" -eq 2 ]
      then echo 'cp -t /boot/efi/EFI/openSUSE /boot/vmlinuz /root/initrd;
-     bootctl update;
-     mv /boot/efi/loader/entries/${cat /etc/machine-id}* /root/bootbak/;' >> $kus;
+bootctl update;
+mv /boot/efi/loader/entries/${cat /etc/machine-id}* /root/bootbak/;' >> $kus;
      else :;
      fi
      echo 'umount /boot/efi;' >> $kus;
