@@ -1,5 +1,6 @@
 #!/bin/sh
 ## by LordNicky
+## v.1.0
 
 . ./lroz.conf
 

@@ -1,4 +1,6 @@
 #!/bin/sh
+## by LordNicky
+## v.1.0
 
 . /root/lroz/lroz.conf
 
