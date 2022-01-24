@@ -26,6 +26,15 @@ nano lroz.conf
 5. Run setup:
 ./lroz.sh
 
+**Notes:**
+
+[zpool features grub2 compability list](https://github.com/openzfs/zfs/blob/master/cmd/zpool/compatibility.d/grub2)
+
+Installed system may not have the same disk id's list, like Live iso.
+If you choose UEFI type of bootloader and system can't boot after installation, 
+check that new system have disk id that you choosed during installation.
+Otherwise, fix /etc/fstab in new system or repeat installation with correct disk id.
+
 **Thanx:**
 
 files/genhostid.sh script taken from [openzfs project](https://github.com/openzfs/zfs/files/4537537/genhostid.sh.gz)
