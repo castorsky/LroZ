@@ -65,6 +65,7 @@ mv /boot/efi/loader/entries/${cat /etc/machine-id}* /root/bootbak/;' >> $kus;
      echo "mount /boot/efi;" >> $kus;
 else :;
 fi     
+chmod +x "$kus";
 
 printf "${GREEN}Do you want to create zfs swap device? (y/n)${NC}\n";
 read -r user_reply;
