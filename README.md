@@ -29,7 +29,7 @@ nano lroz.conf
 ```
 **Notes:**
 
-To use this scripts you need to have at least a general idea about working of ZFS. [Admin Documentation](https://openzfs.github.io/openzfs-docs/Project%20and%20Community/Admin%20Documentation.html)
+To use this scripts you need to understand at least a general idea of ZFS working. [Admin Documentation](https://openzfs.github.io/openzfs-docs/Project%20and%20Community/Admin%20Documentation.html)
 
 [zpool features grub2 compability list](https://github.com/openzfs/zfs/blob/master/cmd/zpool/compatibility.d/grub2)
 
