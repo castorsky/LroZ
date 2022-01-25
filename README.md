@@ -7,7 +7,7 @@ Can be run in silent and semi-interactive mode.
 - OpenSUSE Tumbleweed
 
 **To use scripts you need:**
-1. Create bootable Live cd or usb with preffered(legacy or UEFI) load interface.
+1. Create bootable Live cd or usb with preffered(legacy or UEFI) load interface. Works well [balenaEtcher](https://www.balena.io/etcher/).
 2. Boot from this Live iso and setup network connection. (by "ip" commands, for example)
 3. Download zip archive of LroZ scripts and unzip them:
 ```
