@@ -27,6 +27,10 @@ nano lroz.conf
 ```
 ./lroz.sh
 ```
+6. After reboot, to finish installation run
+```
+/root/lroz/firstboot.sh
+```
 **Notes:**
 
 To use this scripts you need to understand at least a general idea of ZFS working. [Admin Documentation](https://openzfs.github.io/openzfs-docs/Project%20and%20Community/Admin%20Documentation.html)
