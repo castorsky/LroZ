@@ -27,7 +27,7 @@ nano lroz.conf
 ```
 ./lroz.sh
 ```
-6. After reboot, to finish installation run
+6. After reboot and setup network, to finish installation run:
 ```
 /root/lroz/firstboot.sh
 ```
