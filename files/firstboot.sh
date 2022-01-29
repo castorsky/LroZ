@@ -92,10 +92,12 @@ esac
 
 if [ "$INSTALL_ZFSTOOLS" -eq 1 ]
 then printf "${BLUE}Installing zfstools...${NC}\n";
-     gem install zfstools;
-     printf "${GREEN}Please, visit https://github.com/bdrewery/zfstools to read usage instructions.\n";
-     read -n 1 -s -r -p "Press any key to continue...";
-     printf "${NC}";
+     if gem install zfstools;
+     then printf "${GREEN}Please, visit https://github.com/bdrewery/zfstools to read usage instructions.\n";
+          read -n 1 -s -r -p "Press any key to continue...";
+          printf "${NC}";
+     else printf "${RED}Failing of installing zfstools. Please, install them manually.${NC}";
+     fi
 else :;
 fi
 
@@ -107,12 +109,14 @@ then printf "${BLUE}Installing zxfer...${NC}\n";
      ${PURPLE}zypper install man
      ${ORANGE}if you want to read zxfer manual!${NC}";
      fi
-     wget -q -P /root/lroz https://github.com/allanjude/zxfer/archive/refs/heads/master.zip;
-     unzip /root/lroz/master.zip -d /root/lroz;
-     cp /root/lroz/zxfer-master/zxfer /usr/local/sbin/;
-     cp /root/lroz/zxfer-master/zxfer.8 /usr/share/man/man8/;
-     printf "${GREEN}Please, use ${PURPLE}man zxfer${GREEN} to read usage instructions.\n";
-     read -n 1 -s -r -p "Press any key to continue...";
-     printf "${NC}";
+     if wget -q -P /root/lroz https://github.com/allanjude/zxfer/archive/refs/heads/master.zip;
+     then unzip /root/lroz/master.zip -d /root/lroz;
+          cp /root/lroz/zxfer-master/zxfer /usr/local/sbin/;
+          cp /root/lroz/zxfer-master/zxfer.8 /usr/share/man/man8/;
+          printf "${GREEN}Please, use ${PURPLE}man zxfer${GREEN} to read usage instructions.\n";
+          read -n 1 -s -r -p "Press any key to continue...";
+          printf "${NC}";
+     else printf "${RED}Failing of installing zxfer. Please, install them manually.${NC}";
+     fi
 else :;
 fi
