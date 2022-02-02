@@ -10,7 +10,7 @@ printf "${BLUE}Initial cleaning...${NC}\n";
 rm -f /etc/zypp/repos.d/filesystems.repo;
 
 printf "${BLUE}Adding and refreshing repository...${NC}\n";
-if zypper addrepo "$REPO/repositories/filesystems/${repo_rel}/filesystems.repo";
+if zypper addrepo "$REPO2/repositories/filesystems/${repo_rel}/filesystems.repo";
 then if zypper --gpg-auto-import-keys refresh;
      then :;
      else printf "${RED}ERROR: Refresh repositories.${NC}\n"; exit 1;
@@ -372,7 +372,7 @@ zypper --root /mnt install -y kernel-default kernel-firmware;
 printf "${BLUE}Adding and refresh filesystem repository...${NC}\n";
 if [ -e /mnt/etc/zypp/repos.d/filesystems.repo ] 
 then :;
-elif zypper --root /mnt addrepo "$REPO/repositories/filesystems/${repo_rel}/filesystems.repo";
+elif zypper --root /mnt addrepo "$REPO2/repositories/filesystems/${repo_rel}/filesystems.repo";
 then if zypper --root /mnt --gpg-auto-import-keys refresh;
      then zypper --root /mnt up -y;
      zypper --root /mnt install -y zfs zfs-kmp-default;
@@ -443,7 +443,7 @@ fi
 kern_install_func () {
 printf "${ORANGE}06. KERNEL INSTALLATION.${NC}\n";
 echo 'zfs' > /mnt/etc/modules-load.d/zfs.conf;
-kernel_version=$(find /mnt/boot/vmlinuz-* | grep -Eo '[[:digit:]]*\.[[:digit:]]*\.[[:digit:]]*\-[[:digit:]]*\.*[[:digit:]]*\-default');
+kernel_version=$(find /mnt/boot/vmlinuz-* | grep -Eo '[[:digit:]]*\.[[:digit:]]*\.[[:digit:]]*\-.*-default');
 if chroot /mnt kernel-install add "$kernel_version" "/boot/vmlinuz-${kernel_version}";
 then :;
 else printf "${RED}ERROR: Kernel install error, check installed version.${NC}\n"; exit 1;
@@ -460,7 +460,7 @@ then chroot /mnt update-bootloader;
      while [ "$g" -lt "$DISK_NUM" ]
      do	
        eval chroot /mnt grub2-install '$DISK_'$g;
-       g=$((b+1));
+       g=$((g+1));
      done
 elif [ "$BOOT_TYPE" -eq 2 ]     
 then if [ "$BOOT_LOADER" -eq 1 ]
