@@ -445,8 +445,8 @@ else :;
 fi
 
 if [ -z "${GRUB_PRM+x}" ]
-then sed -i "s/^GRUB_CMDLINE_LINUX\=\"\"/GRUB_CMDLINE_LINUX\=\"${GRUB_PRM}\"/" /mnt/etc/default/grub;
-else :;
+then :;
+else sed -i "s/^GRUB_CMDLINE_LINUX\=\"\"/GRUB_CMDLINE_LINUX\=\"${GRUB_PRM}\"/" /mnt/etc/default/grub;
 fi
 }
 
