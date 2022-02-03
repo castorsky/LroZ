@@ -67,11 +67,11 @@ do
   fi
   if [ "$BOOT_PART" -eq 1 ]
   then eval sgdisk -n2:0:+1G -t2:BF01 '$DISK'_$b;
-       if [ -z "$ROOT_SIZE" ];
+       if [ -z "${ROOT_SIZE+x}" ];
        then eval sgdisk -n3:0:0 -t3:BF00 '$DISK'_$b;
        else eval sgdisk -n3:0:+"$ROOT_SIZE" -t3:BF00 '$DISK'_$b;
        fi
-  elif [ -z "$ROOT_SIZE" ];
+  elif [ -z "${ROOT_SIZE+x}" ];
   then eval sgdisk -n2:0:0 -t2:BF00 '$DISK'_$b;
   else eval sgdisk -n2:0:+"$ROOT_SIZE" -t2:BF00 '$DISK'_$b;
   fi
@@ -307,7 +307,7 @@ if zypper --root /mnt install -y zypper;
 then :;
 else printf "${RED}ERROR: Can't install zypper.${NC}\n"; exit 1;
 fi
-if [ -z "$INSTALL_YAST" ];
+if [ -z "${INSTALL_YAST+x}" ];
 then :;
 else 
      if zypper --root /mnt install -y yast2;
@@ -436,6 +436,16 @@ if [ "$ZFS_TMP" -eq 0 ]
 then printf "${BLUE}Enabling tmpfs for /tmp...${NC}\n";
      cp /mnt/usr/share/systemd/tmp.mount /mnt/etc/systemd/system/;
      chroot /mnt systemctl enable tmp.mount;
+else :;
+fi
+
+if [ "$GRUB_OPT" -eq  1 ]
+then sed -i "s/^#GRUB_TERMINAL/GRUB_TERMINAL/" /mnt/etc/default/grub;
+else :;
+fi
+
+if [ -z "${GRUB_PRM+x}" ]
+then sed -i "s/^GRUB_CMDLINE_LINUX\=\"\"/GRUB_CMDLINE_LINUX\=\"${GRUB_PRM}\"/" /mnt/etc/default/grub;
 else :;
 fi
 }
@@ -573,11 +583,6 @@ then printf "${BLUE}Creating initial snapshots...${NC}\n";
      then zfs snapshot -r "$ZPOOL_NAME@install";
      else :;
      fi
-else :;
-fi
-
-if [ "$GRUB_OPT" -eq  1 ]
-then sed -i "s|^#GRUB_TERMINAL|GRUB_TERMINAL|" /mnt/etc/default/grub;
 else :;
 fi
 }
