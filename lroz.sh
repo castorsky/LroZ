@@ -591,6 +591,10 @@ finish_func () {
 printf "${ORANGE}10. FINISHING.${NC}\n";
 mkdir /mnt/root/lroz;
 cp -t /mnt/root/lroz/ ./files/firstboot.sh ./lroz.conf;
+if [ "$INSTALL_ZFSAUTOSNAP" -eq 1 ]
+then cp -t /mnt/root/lroz/ ./files/zfs-auto-snapshot;
+else :;	
+fi	 
 
 printf "${BLUE}Unmounting and exporting zpools...${NC}\n";
 mount | grep -v zfs | tac | awk '/\/mnt/ {print $3}' | xargs -i{} umount -lf {};

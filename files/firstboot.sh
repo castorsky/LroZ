@@ -90,10 +90,16 @@ case "$user_reply" in
 	exit 1;;
 esac
 
-if [ "$INSTALL_ZFSTOOLS" -eq 1 ]
-then printf "${BLUE}Installing zfstools...${NC}\n";
-     if gem install zfstools;
-     then printf "${GREEN}Please, visit https://github.com/bdrewery/zfstools to read usage instructions.\n";
+if [ "$INSTALL_ZFSAUTOSNAP" -eq 1 ]
+then printf "${BLUE}Installing zfs-auto-snapshot...${NC}\n";
+     if zypper install -y cron;
+     then wget -q -P /root/lroz https://github.com/zfsonlinux/zfs-auto-snapshot/archive/refs/heads/master.zip;
+          unzip /root/lroz/master.zip;
+	  cp /root/lroz/zfs-auto-snapshot-master/src/zfs-auto-snapshot.sh /usr/local/sbin/zfs-auto-snapshot;
+	  cp /root/lroz/zfs-auto-snapshot-master/src/zfs-auto-snapshot.8 /usr/share/man/man8/;
+	  cp /root/lroz/zfs-auto-snapshot /etc/cron.d/;
+	  chmod +x /usr/local/sbin/zfs-auto-snapshot.sh;
+          printf "${GREEN}Please, use ${PURPLE}man zfs-auto-snapshot${GREEN} to read usage instructions.\n";
           read -n 1 -s -r -p "Press any key to continue...";
           printf "${NC}\n";
      else printf "${RED}Failing of installing zfstools. Please, install them manually.${NC}";
