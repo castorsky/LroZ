@@ -19,11 +19,14 @@ do
 	exit 1;;
   esac
   read -r user_name;
-  zfs create "rpool/home/$user_name";
+  if [ "$BOOT_PART" -eq 1 ]
+  then zfs create "$RPOOL_NAME/home/$user_name";
+  else zfs create "$ZPOOL_NAME/home/$user_name";
+  fi
   useradd "$user_name";
   passwd "$user_name";
   cp -a /etc/skel/. "/home/$user_name";
-  chown -R "$user_name":"$user_name" "/home/$user_name";
+  chown -R "$user_name":users "/home/$user_name";
   usermod -a -G audio,cdrom,dip,floppy,netdev,plugdev,sudo,video "$user_name";
   printf "${GREEN}Do you want to add another user account? (y/n)${NC}\n";
 done
