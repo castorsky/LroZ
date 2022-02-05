@@ -176,57 +176,44 @@ zfs create "$zp_name/var/log";
 zfs create "$zp_name/var/spool";
 if [ "$ZFS_CACHE" -eq 1 ]
 then zfs create -o com.sun:auto-snapshot=false  "$zp_name/var/cache";
-else :;
 fi	
 if [ "$ZFS_VARTMP" -eq 1 ]
 then zfs create -o com.sun:auto-snapshot=false  "$zp_name/var/tmp";
      chmod 1777 /mnt/var/tmp;
-else :;
 fi
 if [ "$ZFS_OPT" -eq 1 ]
 then zfs create "$zp_name/opt";
-else :;
 fi
 if [ "$ZFS_SRV" -eq 1 ]
 then zfs create "$zp_name/srv";
-else :;
 fi
 if [ "$ZFS_LOCAL" -eq 1 ]
 then zfs create -o canmount=off "$zp_name/usr";
      zfs create "$zp_name/usr/local";
-else :;
 fi
 if [ "$ZFS_GAMES" -eq 1 ]
 then zfs create "$zp_name/var/games";
-else :;
 fi
 if [ "$ZFS_MAIL" -eq 1 ]
 then zfs create "$zp_name/var/mail";
-else :;
 fi
 if [ "$ZFS_SNAP" -eq 1 ]
 then zfs create "$zp_name/var/snap";
-else :;
 fi
 if [ "$ZFS_WWW" -eq 1 ]
 then zfs create "$zp_name/var/www";
-else :;
 fi
 if [ "$ZFS_FLAT" -eq 1 ]
 then zfs create "$zp_name/var/lib/flatpak";
-else :;
 fi
 if [ "$ZFS_GNOME" -eq 1 ]
 then zfs create "$zp_name/var/lib/AccountsService";
-else :;
 fi
 if [ "$ZFS_DOCKER" -eq 1 ]
 then zfs create -o com.sun:auto-snapshot=false  "$zp_name/var/lib/docker";
-else :;
 fi
 if [ "$ZFS_NFS" -eq 1 ]
 then zfs create -o com.sun:auto-snapshot=false  "$zp_name/var/lib/nfs";
-else :;
 fi
 mkdir /mnt/run;
 mount -t tmpfs tmpfs /mnt/run;
@@ -234,7 +221,6 @@ mkdir /mnt/run/lock;
 if [ "$ZFS_TMP" -eq 1 ]
 then zfs create -o com.sun:auto-snapshot=false  "$zp_name/tmp";
      chmod 1777 /mnt/tmp;
-else :;
 fi
 mkdir /mnt/etc/zfs -p;
 cp /etc/zfs/zpool.cache /mnt/etc/zfs/;
@@ -330,7 +316,6 @@ printf "${ORANGE}05. SYSTEM CONFIGURATION.${NC}\n";
 printf "$HOST_NAME" > /mnt/etc/hostname;
 if grep "$HOST_NAME" /mnt/etc/hosts;
 then printf "127.0.1.1	$HOST_FQDN $HOST_NAME" >> /mnt/etc/hosts;
-else :;
 fi
 mount --make-private --rbind /dev  /mnt/dev;
 mount --make-private --rbind /proc /mnt/proc;
@@ -399,7 +384,6 @@ then printf "${BLUE}Preparing boot partition...${NC}\n";
      then zypper --root /mnt install -y "grub2-$(uname -m)-efi";
           echo 'export ZPOOL_VDEV_NAME_PATH=YES' >> /mnt/etc/profile;
           export ZPOOL_VDEV_NAME_PATH=YES;
-     else :;
      fi
      zypper install -y dosfstools;
      mkdosfs -F 32 -s 1 -n EFI "${DISK_0}-part1";
@@ -413,7 +397,6 @@ elif [ "$BOOT_TYPE" -eq 1 ]
 then zypper --root /mnt install -y grub2-i386-pc;
      echo 'export ZPOOL_VDEV_NAME_PATH=YES' >> /mnt/etc/profile;
      export ZPOOL_VDEV_NAME_PATH=YES;
-else :;
 fi
 
 
@@ -429,19 +412,16 @@ then printf "${BLUE}Enabling bpool importing...${NC}\n";
      chown root:root /mnt/etc/systemd/system/zfs-import-bpool.service;
      chmod 644 /mnt/etc/systemd/system/zfs-import-bpool.service;
      chroot /mnt systemctl enable zfs-import-bpool.service;
-else :;
 fi     
 
 if [ "$ZFS_TMP" -eq 0 ]
 then printf "${BLUE}Enabling tmpfs for /tmp...${NC}\n";
      cp /mnt/usr/share/systemd/tmp.mount /mnt/etc/systemd/system/;
      chroot /mnt systemctl enable tmp.mount;
-else :;
 fi
 
 if [ "$GRUB_OPT" -eq  1 ]
 then sed -i "s/^#GRUB_TERMINAL/GRUB_TERMINAL/" /mnt/etc/default/grub;
-else :;
 fi
 
 if [ -z "${GRUB_PRM+x}" ]
@@ -505,7 +485,6 @@ then if [ "$BOOT_LOADER" -eq 1 ]
        h=$((h+1));
      done
      chroot /mnt mount /boot/efi;
-     else :;
      fi
 else printf "${RED}ERROR: Check BOOT_TYPE variable.${NC}\n"; exit 1;
 fi
@@ -517,7 +496,6 @@ mkdir /mnt/etc/zfs/zfs-list.cache;
 touch "/mnt/etc/zfs/zfs-list.cache/$zp_name";
 if [ "$BOOT_PART" -eq 1 ]
 then touch "/etc/zfs/zfs-list.cache/$ZPOOL_NAME";
-else :;
 fi
 chroot /mnt ln -s /usr/lib/zfs/zed.d/history_event-zfs-list-cacher.sh /etc/zfs/zed.d;
 chroot /mnt zed -F &
@@ -581,9 +559,7 @@ then printf "${BLUE}Creating initial snapshots...${NC}\n";
      zfs snapshot -r "$zp_name@install";
      if [ "$BOOT_PART" -eq 1 ]
      then zfs snapshot -r "$ZPOOL_NAME@install";
-     else :;
      fi
-else :;
 fi
 }
 
@@ -593,7 +569,6 @@ mkdir /mnt/root/lroz;
 cp -t /mnt/root/lroz/ ./files/firstboot.sh ./lroz.conf;
 if [ "$INSTALL_ZFSAUTOSNAP" -eq 1 ]
 then cp -t /mnt/root/lroz/ ./files/zfs-auto-snapshot;
-else :;	
 fi	 
 
 printf "${BLUE}Unmounting and exporting zpools...${NC}\n";
@@ -645,43 +620,33 @@ func=${1:-0};
 
 if [ "$func" -eq 1 ]
 then prep_func; exit 0;
-else :;
 fi	
 if [ "$func" -eq 2 ]
 then disk_format_func; exit 0;
-else :;
 fi	
 if [ "$func" -eq 3 ]
 then create_fs_func; exit 0;
-else :;
 fi	
 if [ "$func" -eq 4 ]
 then sys_install_func; exit 0;
-else :;
 fi	
 if [ "$func" -eq 5 ]
 then sys_config_func; exit 0;
-else :;
 fi	
 if [ "$func" -eq 6 ]
 then kern_install_func; exit 0;
-else :;
 fi	
 if [ "$func" -eq 7 ]
 then bl_install_func; exit 0;
-else :;
 fi	
 if [ "$func" -eq 8 ]
 then fs_config_func; exit 0;
-else :;
 fi	
 if [ "$func" -eq 9 ]
 then add_config_func; exit 0;
-else :;
 fi	
 if [ "$func" -eq 10 ]
 then finish_func; exit 0;
-else :;
 fi	
 
 printf "${GREEN}Hi! This script will help you to install OpenSUSE

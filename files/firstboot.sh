@@ -52,7 +52,6 @@ grub2-install --target=$(uname -m)-efi --efi-directory=/boot/efi --bootloader-id
      then echo 'cp -t /boot/efi/EFI/openSUSE /boot/vmlinuz /root/initrd;
 bootctl update;
 mv /boot/efi/loader/entries/${cat /etc/machine-id}* /root/bootbak/;' >> $kus;
-     else :;
      fi
      echo 'umount /boot/efi;' >> $kus;
      b=1;
@@ -63,7 +62,6 @@ mv /boot/efi/loader/entries/${cat /etc/machine-id}* /root/bootbak/;' >> $kus;
        b=$((b+1));
      done
      echo "mount /boot/efi;" >> $kus;
-else :;
 fi     
 chmod +x "$kus";
 
@@ -97,14 +95,24 @@ then printf "${BLUE}Installing zfs-auto-snapshot...${NC}\n";
           unzip /root/lroz/master.zip;
 	  cp /root/lroz/zfs-auto-snapshot-master/src/zfs-auto-snapshot.sh /usr/local/sbin/zfs-auto-snapshot;
 	  cp /root/lroz/zfs-auto-snapshot-master/src/zfs-auto-snapshot.8 /usr/share/man/man8/;
-	  cp /root/lroz/zfs-auto-snapshot /etc/cron.d/;
+	  cp /root/lroz/zfs-auto-snapshot.sh /etc/cron.d/zfs-auto-snapshot;
 	  chmod +x /usr/local/sbin/zfs-auto-snapshot.sh;
           printf "${GREEN}Please, use ${PURPLE}man zfs-auto-snapshot${GREEN} to read usage instructions.\n";
           read -n 1 -s -r -p "Press any key to continue...";
           printf "${NC}\n";
      else printf "${RED}Failing of installing zfstools. Please, install them manually.${NC}";
      fi
-else :;
+fi
+
+if [ "$INSTALL_ZFSTOOLS" -eq 1 ]
+then printf "${BLUE}Installing zfstools...${NC}\n";
+     if gem install zfstools;
+     then cp /root/lroz/zfs-auto-snapshot.ruby /etc/cron.d/zfs-auto-snapshot;
+     printf "${GREEN}Please, visit https://github.com/bdrewery/zfstools to read usage instructions.\n";
+     read -n 1 -s -r -p "Press any key to continue...";
+     printf "${NC}\n";
+     else printf "${RED}Failing of installing zfstools. Please, install them manually.${NC}";
+     fi
 fi
 
 if [ "$INSTALL_ZXFER" -eq 1 ]
@@ -125,5 +133,4 @@ then printf "${BLUE}Installing zxfer...${NC}\n";
           printf "${NC}\n";
      else printf "${RED}Failing of installing zxfer. Please, install them manually.${NC}";
      fi
-else :;
 fi
