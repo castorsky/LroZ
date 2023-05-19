@@ -10,7 +10,7 @@ printf "${BLUE}Initial cleaning...${NC}\n";
 rm -f /etc/zypp/repos.d/filesystems.repo;
 
 printf "${BLUE}Adding and refreshing repository...${NC}\n";
-if zypper addrepo "$REPO2/repositories/filesystems/${repo_rel}/filesystems.repo";
+if zypper addrepo "$REPO2";
 then if zypper --gpg-auto-import-keys refresh;
      then :;
      else printf "${RED}ERROR: Refresh repositories.${NC}\n"; exit 1;
@@ -215,14 +215,14 @@ fi
 if [ "$ZFS_NFS" -eq 1 ]
 then zfs create -o com.sun:auto-snapshot=false  "$zp_name/var/lib/nfs";
 fi
-mkdir /mnt/run;
+mkdir -p /mnt/run;
 mount -t tmpfs tmpfs /mnt/run;
-mkdir /mnt/run/lock;
+mkdir -p /mnt/run/lock;
 if [ "$ZFS_TMP" -eq 1 ]
 then zfs create -o com.sun:auto-snapshot=false  "$zp_name/tmp";
      chmod 1777 /mnt/tmp;
 fi
-mkdir /mnt/etc/zfs -p;
+mkdir -p /mnt/etc/zfs -p;
 cp /etc/zfs/zpool.cache /mnt/etc/zfs/;
 #chmod a-w /mnt/etc/zfs/zpool.cache;
 #chattr +i /mnt/etc/zfs/zpool.cache;
@@ -321,7 +321,7 @@ mount --make-private --rbind /dev  /mnt/dev;
 mount --make-private --rbind /proc /mnt/proc;
 mount --make-private --rbind /sys  /mnt/sys;
 mount -t tmpfs tmpfs /mnt/run;
-mkdir /mnt/run/lock;
+mkdir -p /mnt/run/lock;
 printf "${BLUE}Starting chroot configuration...${NC}\n";
 chroot /mnt ln -s /proc/self/mounts /etc/mtab;
 
@@ -357,7 +357,7 @@ zypper --root /mnt install -y kernel-default kernel-firmware;
 printf "${BLUE}Adding and refresh filesystem repository...${NC}\n";
 if [ -e /mnt/etc/zypp/repos.d/filesystems.repo ] 
 then :;
-elif zypper --root /mnt addrepo "$REPO2/repositories/filesystems/${repo_rel}/filesystems.repo";
+elif zypper --root /mnt addrepo "$REPO2";
 then if zypper --root /mnt --gpg-auto-import-keys refresh;
      then zypper --root /mnt up -y;
      zypper --root /mnt install -y zfs zfs-kmp-default;
@@ -387,7 +387,7 @@ then printf "${BLUE}Preparing boot partition...${NC}\n";
      fi
      zypper install -y dosfstools;
      mkdosfs -F 32 -s 1 -n EFI "${DISK_0}-part1";
-     mkdir /mnt/boot/efi;
+     mkdir -p /mnt/boot/efi;
      if grep efi /mnt/etc/fstab;
      then :;
      else echo "${DISK_0}-part1 /boot/efi vfat defaults 0 0" >> /mnt/etc/fstab;
@@ -438,7 +438,7 @@ if chroot /mnt kernel-install add "$kernel_version" "/boot/vmlinuz-${kernel_vers
 then :;
 else printf "${RED}ERROR: Kernel install error, check installed version.${NC}\n"; exit 1;
 fi	
-chroot /mnt mkinitrd;
+chroot /mnt dracut --regenerate-all --force;
 }
 
 bl_install_func () {
@@ -470,7 +470,7 @@ then if [ "$BOOT_LOADER" -eq 1 ]
 	  cp ./files/openSUSE.conf "/mnt/boot/efi/loader/entries/openSUSE_${name_rel}.conf";
 	  chown root:root "/mnt/boot/efi/loader/entries/openSUSE_${name_rel}.conf";
 	  chmod 755 "/mnt/boot/efi/loader/entries/openSUSE_${name_rel}.conf";
-	  mkdir /mnt/boot/efi/EFI/openSUSE;
+	  mkdir -p /mnt/boot/efi/EFI/openSUSE;
 	  cp -t /mnt/boot/efi/EFI/openSUSE /mnt/boot/vmlinuz /mnt/boot/initrd;
 	  chroot /mnt bootctl update;
      else printf "${RED}ERROR: Check BOOT_LOADER variable.${NC}\n"; exit 1;
@@ -492,7 +492,7 @@ fi
 
 fs_config_func () {
 printf "${ORANGE}08. FILESYSTEM CONFIGURATION.${NC}\n";
-mkdir /mnt/etc/zfs/zfs-list.cache;
+mkdir -p /mnt/etc/zfs/zfs-list.cache;
 touch "/mnt/etc/zfs/zfs-list.cache/$zp_name";
 if [ "$BOOT_PART" -eq 1 ]
 then touch "/etc/zfs/zfs-list.cache/$ZPOOL_NAME";
@@ -565,7 +565,7 @@ fi
 
 finish_func () {
 printf "${ORANGE}10. FINISHING.${NC}\n";
-mkdir /mnt/root/lroz;
+mkdir -p /mnt/root/lroz;
 cp -t /mnt/root/lroz/ ./files/firstboot.sh ./lroz.conf;
 if [ "$INSTALL_ZFSAUTOSNAP" -eq 1 ]
 then cp -t /mnt/root/lroz/ ./files/zfs-auto-snapshot.sh;
